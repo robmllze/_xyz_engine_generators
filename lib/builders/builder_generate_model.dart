@@ -145,7 +145,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
         } else
         // Handle Models.
         if (fieldType.startsWith("Model")) {
-          fieldName = "$fieldName.toJson()?.nullIfEmpty()";
+          fieldName = "$fieldName?.toJson().nullIfEmpty()";
         } else
         // Handle Map.
         if (fieldType.startsWith("Map")) {
