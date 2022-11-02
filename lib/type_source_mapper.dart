@@ -4,18 +4,42 @@
 //
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+typedef TMappers = Map<String, String Function(_MapperEvent)>;
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
 class TypeSourceMapper {
   //
   //
   //
 
-  final Map<RegExp, String Function(_MapperEvent)> _moreMappers;
+  final TMappers mappers;
 
   //
   //
   //
 
-  const TypeSourceMapper([this._moreMappers = const {}]);
+  const TypeSourceMapper([this.mappers = const {}]);
+
+  //
+  //
+  //
+
+  factory TypeSourceMapper.withDefaultToMappers([
+    TMappers moreMappers = const {},
+  ]) {
+    return TypeSourceMapper({...defaultToMappers, ...moreMappers});
+  }
+
+  //
+  //
+  //
+
+  factory TypeSourceMapper.withDefaultFromMappers([
+    TMappers moreMappers = const {},
+  ]) {
+    return TypeSourceMapper({...defaultFromMappers, ...moreMappers});
+  }
 
   //
   //
@@ -25,7 +49,7 @@ class TypeSourceMapper {
     final parsed = _parseTypeSource(typeSource);
     final compiled = _complieExpression(
       parsed,
-      moreMappers: this._moreMappers,
+      mappers: this.mappers,
     );
     return compiled.replaceFirst("p0", name);
   }
@@ -67,22 +91,32 @@ List<List<String>> _parseTypeSource(String typeSource) {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
+TMappers filterMappersForType(
+  String type,
+  TMappers allMappers,
+) {
+  return Map.fromEntries(
+    allMappers.entries.where((final l) {
+      return RegExp(l.key).hasMatch(type);
+    }),
+  );
+}
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
 String? _mapped(
   _MapperEvent event,
-  Map<RegExp, String Function(_MapperEvent)> moreMappers,
+  TMappers mappers,
 ) {
   final type = event.type;
   if (type != null) {
-    final all = {..._defaultMappers, ...moreMappers}.entries.where((final l) {
-      final exp = l.key;
-      return exp.hasMatch(type);
-    });
+    final all = filterMappersForType(type, mappers);
     assert(all.length <= 1, "Multiple mapper matches found!");
     if (all.length == 1) {
-      final first = all.first;
-      final exp = first.key;
+      final first = all.entries.first;
       final mapper = first.value;
-      final match = exp.firstMatch(type)!;
+      final regExp = RegExp(first.key);
+      final match = regExp.firstMatch(type)!;
       event._keyMatchGroups = Iterable.generate(match.groupCount + 1, (i) => match.group(i)!);
       return mapper(event);
     }
@@ -94,12 +128,12 @@ String? _mapped(
 
 String _complieExpression(
   List<List<String>> parsedTypeSource, {
-  Map<RegExp, String Function(_MapperEvent)> moreMappers = const {},
+  TMappers mappers = const {},
 }) {
   var output = "#x0";
   // Loop through type elements.
   for (final typeElement in parsedTypeSource) {
-    final base = _MapperBaseEvent().._pTypes = typeElement.skip(2);
+    final base = MapperBaseEvent().._pTypes = typeElement.skip(2);
     final pLength = base._pTypes.length;
     base
       .._pHashes = Iterable.generate(pLength, (final i) => i).map((l) => "#p$l")
@@ -111,7 +145,7 @@ String _complieExpression(
         ? int.tryParse(argIdMatch.group(1)!)
         : null;
     final xHash = "#x${base._pN}";
-    final mapped = _mapped(base, moreMappers);
+    final mapped = _mapped(base, mappers);
     if (mapped != null) {
       output = output.replaceFirst(xHash, mapped);
     } else {
@@ -119,7 +153,7 @@ String _complieExpression(
     }
     // Loop through subtypes.
     for (var n = 0; n < pLength; n++) {
-      final sub = _MapperSubEvent()
+      final sub = MapperSubEvent()
         .._pN = n
         .._type = base._pTypes.elementAt(n);
       final pHash = "#p$n";
@@ -132,7 +166,7 @@ String _complieExpression(
       // If the subtype is something other, presumably a simple object like
       // num, int, double, bool or String.
       else {
-        final mapped = _mapped(sub, moreMappers);
+        final mapped = _mapped(sub, mappers);
         if (mapped != null) {
           output = output.replaceFirst(pHash, mapped);
         } else {
@@ -147,10 +181,11 @@ String _complieExpression(
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 abstract class _MapperEvent {
+  String? _p;
   int? _pN;
   String? _type;
   int? get pN => this._pN;
-  String? get p => _pN != null ? "p${this._pN}" : null;
+  String? get p => this._p ?? (_pN != null ? "p${this._pN}" : null);
   String? get type => this._type;
   Iterable<String>? _keyMatchGroups;
   Iterable<String>? get keyMatchGroups => this._keyMatchGroups;
@@ -158,7 +193,7 @@ abstract class _MapperEvent {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-class _MapperBaseEvent extends _MapperEvent {
+class MapperBaseEvent extends _MapperEvent {
   Iterable<String> _pArgs = [];
   Iterable<String> _pHashes = [];
   Iterable<String> _pParams = [];
@@ -175,133 +210,229 @@ class _MapperBaseEvent extends _MapperEvent {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-class _MapperSubEvent extends _MapperEvent {}
+class MapperSubEvent extends _MapperEvent {
+  MapperSubEvent();
+  MapperSubEvent.custom(String p, Iterable<String> keyMatchGroups) {
+    this._p = p;
+    this._keyMatchGroups = keyMatchGroups;
+  }
+}
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-final _defaultMappers = <RegExp, String Function(_MapperEvent)>{
-  RegExp(r"^Map$"): (e) {
-    e as _MapperBaseEvent;
+String typeSourceRemoveCleaned(String typeSource) {
+  var temp = typeSource.replaceAll(" ", "");
+  while (true) {
+    final matches = RegExp(r"\w+(\|clean)?\<([\w\[\]\+]+\??)(,[\w\[\]\+]+\??)*\>").allMatches(temp);
+    if (matches.isEmpty) break;
+    final match = matches.first;
+    final group0 = match.group(0)!;
+    temp = temp.replaceAll(
+      group0,
+      group0
+          .replaceAll("|clean", "")
+          .replaceAll("?", "")
+          .replaceAll("<", "[")
+          .replaceAll(">", "]")
+          .replaceAll(",", "+"),
+    );
+  }
+
+  return temp.replaceAll("[", "<").replaceAll("]", ">").replaceAll("+", ", ");
+}
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+final defaultToMappers = TMappers.unmodifiable({
+  r"^Map$": /* clean */ (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "${e.p}.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
+  },
+  r"^Map\?$": /* clean */ (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "${e.p}?.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
+  },
+  //
+  r"^List$": /* clean */ (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "${e.p}.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  },
+  r"^List\?$": /* clean */ (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "${e.p}?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  },
+  //
+  r"^Set$": /* clean */ (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "${e.p}.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  },
+  r"^Set\?$": /* clean */ (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "${e.p}?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  },
+  //
+  r"^(dynamic|bool|num|int|double)\??$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}";
+  },
+  //
+  r"^String$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}.nullIfEmpty()";
+  },
+  r"^String\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}?.nullIfEmpty()";
+  },
+  //
+  r"^DateTime$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}.toUtc().toIso8601String()";
+  },
+  r"^DateTime\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}?.toUtc().toIso8601String()";
+  },
+});
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+final defaultFromMappers = TMappers.unmodifiable({
+  r"^Map$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
     return "(${e.p} as Map).map((${e.args}) => MapEntry(${e.hashes},),)";
   },
-  RegExp(r"^Map\?$"): (e) {
-    e as _MapperBaseEvent;
-    return "(${e.p} as Map?)?.map((${e.args}) => MapEntry(${e.hashes},),)";
+  r"^Map\?$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "letAs<Map>(${e.p})?.map((${e.args}) => MapEntry(${e.hashes},),)";
   },
-  RegExp(r"^Map\|clean$"): (e) {
-    e as _MapperBaseEvent;
+  r"^Map\|clean$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
     return "(${e.p} as Map).map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
   },
-  RegExp(r"^Map\|clean\?$"): (e) {
-    e as _MapperBaseEvent;
-    return "(${e.p} as Map?)?.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
+  r"^Map\|clean\?$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "letAs<Map>(${e.p})?.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
   },
   //
-  RegExp(r"^List$"): (e) {
-    e as _MapperBaseEvent;
+  r"^List$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
     return "(${e.p} as List).map((${e.args}) => ${e.hashes},).toList()";
   },
-  RegExp(r"^List\?$"): (e) {
-    e as _MapperBaseEvent;
-    return "(${e.p} as List?)?.map((${e.args}) => ${e.hashes},).toList()";
+  r"^List\?$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "letAs<List>(${e.p})?.map((${e.args}) => ${e.hashes},).toList()";
   },
-  RegExp(r"^List\|clean$"): (e) {
-    e as _MapperBaseEvent;
+  r"^List\|clean$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
     return "(${e.p} as List).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
   },
-  RegExp(r"^List\|clean\?$"): (e) {
-    e as _MapperBaseEvent;
-    return "(${e.p} as List?)?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  r"^List\|clean\?$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "letAs<List>(${e.p})?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
   },
   //
-  RegExp(r"^Set$"): (e) {
-    e as _MapperBaseEvent;
+  r"^Set$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
     return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).toSet()";
   },
-  RegExp(r"^Set\?$"): (e) {
-    e as _MapperBaseEvent;
-    return "(${e.p} as Set?)?.map((${e.args}) => ${e.hashes},).toSet()";
+  r"^Set\?$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "letAs<Set>(${e.p})?.map((${e.args}) => ${e.hashes},).toSet()";
   },
-  RegExp(r"^Set\|clean$"): (e) {
-    e as _MapperBaseEvent;
+  r"^Set\|clean$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
     return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
   },
-  RegExp(r"^Set\|clean\?$"): (e) {
-    e as _MapperBaseEvent;
-    return "(${e.p} as Set?)?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
+  r"^Set\|clean\?$": (e) {
+    if (e is! MapperBaseEvent) throw TypeError();
+    return "letAs<Set>(${e.p})?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
   },
   //
-  RegExp(r"^dynamic$"): (e) {
-    e as _MapperSubEvent;
+  r"^dynamic$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}";
   },
-  RegExp(r"^dynamic\?$"): (e) {
-    e as _MapperSubEvent;
+  r"^dynamic\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}";
   },
   //
-  RegExp(r"^bool$"): (e) {
-    e as _MapperSubEvent;
+  r"^bool$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p} as bool)";
   },
-  RegExp(r"^bool\?$"): (e) {
-    e as _MapperSubEvent;
-    return "(${e.p} as bool?)";
+  r"^bool\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letAs<bool>(${e.p})";
   },
-  RegExp(r"^bool\|let$"): (e) {
-    e as _MapperSubEvent;
+  r"^bool\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "letBool(${e.p})";
   },
   //
-  RegExp(r"^num$"): (e) {
-    e as _MapperSubEvent;
-    return "(${e.p} as int)";
+  r"^num$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "(${e.p} as num)";
   },
-  RegExp(r"^num\?$"): (e) {
-    e as _MapperSubEvent;
-    return "(${e.p} as num?)";
+  r"^num\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letAs<num>(${e.p})";
   },
-  RegExp(r"^num\|let$"): (e) {
-    e as _MapperSubEvent;
+  r"^num\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "letNum(${e.p})";
   },
   //
-  RegExp(r"^int$"): (e) {
-    e as _MapperSubEvent;
+  r"^int$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p} as int)";
   },
-  RegExp(r"^int\?$"): (e) {
-    e as _MapperSubEvent;
-    return "(${e.p} as int?)";
+  r"^int\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letAs<int>(${e.p})";
   },
-  RegExp(r"^int\|let$"): (e) {
-    e as _MapperSubEvent;
+  r"^int\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "letInt(${e.p})";
   },
   //
-  RegExp(r"^double$"): (e) {
-    e as _MapperSubEvent;
+  r"^double$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p} as double)";
   },
-  RegExp(r"^double\?$"): (e) {
-    e as _MapperSubEvent;
-    return "(${e.p} as double?)";
+  r"^double\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letAs<double>(${e.p})";
   },
-  RegExp(r"^double\|let$"): (e) {
-    e as _MapperSubEvent;
+  r"^double\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "letDouble(${e.p})";
   },
   //
-  RegExp(r"^String$"): (e) {
-    e as _MapperSubEvent;
+  r"^String$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p}.toString())";
   },
-  RegExp(r"^String\?$"): (e) {
-    e as _MapperSubEvent;
+  r"^String\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p}?.toString())";
   },
-  RegExp(r"^String\|let$"): (e) {
-    e as _MapperSubEvent;
+  r"^String\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
     return "letString(${e.p})";
   },
-};
+  //
+  r"^DateTime$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "DateTime.parse(${e.p}.toString())";
+  },
+  r"^DateTime\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "DateTime.tryParse(${e.p}.toString())";
+  },
+  r"^DateTime\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letDateTime(${e.p})";
+  },
+});

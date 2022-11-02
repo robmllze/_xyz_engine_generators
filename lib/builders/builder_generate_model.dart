@@ -12,6 +12,7 @@ import 'package:xyz_engine_generators_annotations/xyz_engine_generators_annotati
 import 'package:xyz_utils/xyz_utils.dart';
 
 import '../model_visitor.dart';
+import '../type_source_mapper.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
@@ -30,179 +31,103 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     ConstantReader annotation,
     BuildStep buildStep,
   ) {
-    try {
-      final visitor = ModelVisitor();
-      element.visitChildren(visitor);
-      final buffer = StringBuffer();
-      final nameClass = visitor.nameClass?.replaceFirst("_", "");
-      final path = annotation.read("path").stringValue;
-      final parameters0 = annotation
-          .read("parameters")
-          .mapValue
-          .map((final k, final v) => MapEntry(k!.toStringValue(), v!.toStringValue()))
-          .cast<String, String>()
-          .entries;
-      final parameters1 = parameters0.toList()..removeWhere((final l) => l.key == "id");
-      // Member variables.
-      final AAA = parameters1.map((final l) {
-        final fieldName = l.key;
-        final fieldType = l.value;
-        return "$fieldType $fieldName;";
-      }).toList()
-        ..sort();
+    // Input.
+    final visitor = ModelVisitor();
+    element.visitChildren(visitor);
+    final buffer = StringBuffer();
+    final nameClass = visitor.nameClass?.replaceFirst("_", "");
+    final path = annotation.read("path").stringValue;
+    final parameters0 = annotation
+        .read("parameters")
+        .mapValue
+        .map(
+          (final k, final v) => MapEntry(
+            k?.toStringValue()?.trim(),
+            v?.toStringValue()?.trim(),
+          ),
+        )
+        .cast<String, String>()
+        .entries;
+    final parameters1 = parameters0.toList()..removeWhere((final l) => l.key == "id");
 
-      // Constructor parameters.
-      final BBB = parameters1.map((final l) {
-        final fieldName = l.key;
-        return "this.$fieldName,";
-      }).toList()
-        ..sort();
+    // Prepare member variables.
+    final insertMemberVariables = parameters1.map((final l) {
+      final fieldName = l.key;
+      final fieldType = typeSourceRemoveCleaned(l.value);
+      return "$fieldType $fieldName;";
+    }).toList()
+      ..sort();
 
-      // From JSON.
-      final CCC = parameters0.map((final l) {
-        var fieldName = l.key;
-        final fieldNameSnakeCase = fieldName.toSnakeCase();
-        final fieldType = l.value.toString().replaceAll("?", "");
-        switch (fieldType) {
-          // Handle bool.
-          case "bool":
-            return "$fieldName = letBool(json[\"$fieldNameSnakeCase\"])";
-          // Handle int.
-          case "int":
-            return "$fieldName = letInt(json[\"$fieldNameSnakeCase\"])";
-          case "double":
-            // Handle double.
-            return "$fieldName = letDouble(json[\"$fieldNameSnakeCase\"])";
-          case "num":
-            // Handle num.
-            return "$fieldName = letNum(json[\"$fieldNameSnakeCase\"])";
-          case "String":
-            // Handle String.
-            return "$fieldName = letString(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-          case "DateTime":
-            // Handle DateTime.
-            return "$fieldName = letDateTime(json[\"$fieldNameSnakeCase\"])?.toLocal()";
-        }
-        // Handle Models.
-        if (fieldType.startsWith("Model")) {
-          final a =
-              "json${fieldName[0].toUpperCase() + (fieldName.length > 1 ? fieldName.substring(1) : "")}";
-          return "final $a = letMap<String, dynamic>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty();\n"
-              "$fieldName = $a != null ? $fieldType.fromJson($a): null";
-        }
-        // Handle Map.
-        if (fieldType.startsWith("Map")) {
-          final matches = RegExp(r"\<(\w+) *, *(\w+)\>").firstMatch(fieldType);
-          if (matches != null && matches.groupCount == 2) {
-            final t1 = matches.group(1)!;
-            final t2 = matches.group(2)!;
-            // Hanlde Models.
-            if (t2.startsWith("Model")) {
-              return "$fieldName = (letMap<$t1, dynamic>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()?.map((final k, final v) { final a = letMap<String, dynamic>(v); return MapEntry(k, a != null ? $t2.fromJson(a): null);})?..removeWhere((_, final l) => l == null))?.nullIfEmpty()?.cast()";
-            }
-            return "$fieldName = letMap<$t1, $t2>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-          }
-          return "$fieldName = letMap<String, dynamic>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-        }
-        // Handle Set.
-        if (fieldType.startsWith("Set")) {
-          final matches = RegExp(r"\<(\w+)>").firstMatch(fieldType);
-          if (matches != null && matches.groupCount == 1) {
-            final t = matches.group(1)!;
-            // Handle Models.
-            if (t.startsWith("Model")) {
-              return "$fieldName = (letSet(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()?.map((final l) { final a = letMap<String, dynamic>(l)?.nullIfEmpty(); return a != null ? $t.fromJson(a): null; })?.toSet()?..removeWhere((final l) => l == null))?.nullIfEmpty()?.cast()";
-            }
-            return "$fieldName = letSet<$t>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-          }
-          return "$fieldName = letSet(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-        }
-        // Handle List.
-        if (fieldType.startsWith("List")) {
-          final matches = RegExp(r"\<(\w+)>").firstMatch(fieldType);
-          if (matches != null && matches.groupCount == 1) {
-            final t = matches.group(1)!;
-            // Handle Models.
-            if (t.startsWith("Model")) {
-              return "$fieldName = (letList(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()?.map((final l) { final a = letMap<String, dynamic>(l)?.nullIfEmpty(); return a != null ? $t.fromJson(a): null; })?.toList()?..removeWhere((final l) => l == null))?.nullIfEmpty()?.cast()";
-            }
-            return "$fieldName = letList<$t>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-          }
-          return "$fieldName = letList(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
-        }
-        return "$fieldName = let<$fieldType>(json[\"$fieldNameSnakeCase\"])";
-      }).toList()
-        ..sort();
+    // // Prepare constructor parameters.
+    final insertConstructorParameters = parameters1.map((final l) {
+      final fieldName = l.key;
+      return "this.$fieldName,";
+    }).toList()
+      ..sort();
 
-      // To JSON.
-      final DDD = parameters0.map((final l) {
-        var fieldName = l.key;
-        final fieldNameSnakeCase = fieldName.toSnakeCase();
-        final fieldType = l.value.toString();
-        // Handle String.
-        if (fieldType == "String") {
-          fieldName = "$fieldName?.nullIfEmpty()";
-        } else
-        // Handle Models.
-        if (fieldType.startsWith("Model")) {
-          fieldName = "$fieldName?.toJson().nullIfEmpty()";
-        } else
-        // Handle Map.
-        if (fieldType.startsWith("Map")) {
-          final matches = RegExp(r"\<(\w+) *, *(\w+)\>").firstMatch(fieldType);
-          if (matches != null && matches.groupCount == 2) {
-            //final t1 = matches.group(1)!;
-            final t2 = matches.group(2)!;
-            // Handle Models.
-            if (t2.startsWith("Model")) {
-              fieldName = "$fieldName?.nullIfEmpty()?.map((final k, final v) => "
-                  "MapEntry(k.toString(), v.toJson()))";
-            } else {
-              fieldName = "letMap<String, dynamic>($fieldName)?.nullIfEmpty()";
-            }
-          } else {
-            fieldName = "letMap<String, dynamic>($fieldName)?.nullIfEmpty()";
-          }
-        } else
-        // Handle Set.
-        if (fieldType.startsWith("Set")) {
-          fieldName = "$fieldName?.toList().nullIfEmpty()";
-        } else
-        // Handle List.
-        if (fieldType.startsWith("List")) {
-          fieldName = "$fieldName?.nullIfEmpty()";
-        } else
-        // Handle DateTime.
-        if (fieldType == "DateTime?") {
-          fieldName = "$fieldName?.toUtc().toIso8601String()";
-        }
-        return "\"$fieldNameSnakeCase\": $fieldName";
-      }).toList()
-        ..sort();
+    // Prepare fromJson.
+    final insertFromJson = parameters0.map((final l) {
+      final fieldName = l.key;
+      final fieldNameSnakeCase = fieldName.toSnakeCase();
+      final fieldTypeSource = l.value;
+      final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
+      final p = "json[\"$fieldNameSnakeCase\"]";
+      final compiled = TypeSourceMapper.withDefaultFromMappers(modelFromMappers)
+          .compile(fieldTypeSource, p)
+          .replaceFirst(
+              "#x0",
+              _subEventReplacement(fieldType, p, {
+                ...defaultFromMappers,
+                ...modelFromMappers,
+              }));
+      return "$fieldName = $compiled";
+    }).toList()
+      ..sort();
 
-      // New with.
-      final EEE = parameters0.map((final l) {
-        final fieldName = l.key;
-        return "$fieldName: other.$fieldName ?? this.$fieldName,";
-      }).toList()
-        ..sort();
+    // Prepare toJson.
+    final insertToJson = parameters0.map((final l) {
+      final fieldName = l.key;
+      final fieldNameSnakeCase = fieldName.toSnakeCase();
+      final fieldTypeSource = l.value;
+      final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
+      final p = fieldName;
+      final compiled = TypeSourceMapper.withDefaultToMappers(modelToMappers) //
+          .compile(fieldType, p)
+          .replaceFirst(
+            "#x0",
+            _subEventReplacement(fieldType, p, {
+              ...defaultToMappers,
+              ...modelToMappers,
+            }),
+          );
+      return "\"$fieldNameSnakeCase\": $compiled";
+    }).toList()
+      ..sort();
 
-      // Update with.
-      final FFF = parameters0.map((final l) {
-        final fieldName = l.key;
-        return "if (other.$fieldName != null) this.$fieldName = other.$fieldName;";
-      }).toList()
-        ..sort();
+    // Prepare newWith.
+    final insertNewWith = parameters0.map((final l) {
+      final fieldName = l.key;
+      return "$fieldName: other.$fieldName ?? this.$fieldName,";
+    }).toList()
+      ..sort();
 
-      buffer.writeAll(
-        [
-          """
-        class $nameClass extends GeneratedModel implements _$nameClass{
+    // Prepare updateWith.
+    final insertUpdateWith = parameters0.map((final l) {
+      final fieldName = l.key;
+      return "if (other.$fieldName != null) { this.$fieldName = other.$fieldName; }";
+    }).toList()
+      ..sort();
+
+    // Output.
+    buffer.writeAll(
+      [
+        """
+        class $nameClass extends GeneratedModel {
           //
           //
           //
 
-          ${AAA.join("\n")}
+          ${insertMemberVariables.join("\n")}
           
           //
           //
@@ -210,7 +135,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           $nameClass({
             String? id,
-            ${BBB.join("\n")}
+            ${insertConstructorParameters.join("\n")}
           }) {
             super.id = id;
           }
@@ -220,7 +145,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
 
           $nameClass.fromJson(Map<String, dynamic> json) {
-            ${CCC.join(";\n")};
+            ${insertFromJson.join(";\n")};
           }
 
           //
@@ -230,7 +155,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           Map<String, dynamic> toJson() {
             return {
-              ${DDD.join(",\n")},
+              ${insertToJson.join(",\n")},
             }..removeWhere((_, final l) => l == null);
           }
 
@@ -254,7 +179,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           T newWith<T extends GeneratedModel>(T other) {
             assert(other is $nameClass);
-            return (other is $nameClass ? $nameClass(${EEE.join("\n")}): $nameClass()) as T;
+            return (other is $nameClass ? $nameClass(${insertNewWith.join("\n")}): $nameClass()) as T;
           }
 
           //
@@ -286,7 +211,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           void updateWith<T extends GeneratedModel>(T other) {
             assert(other is $nameClass);
             if (other is $nameClass) {
-              ${FFF.join("\n")}
+              ${insertUpdateWith.join("\n")}
             }
           }
 
@@ -315,8 +240,11 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           @override
           String toString() => this.toJson().toString();
+        """,
 
-          ${path.isNotEmpty ? """
+        // Utils for Firebase
+        if (path.isNotEmpty) ...[
+          """
           // ---------------------------------------------------------------------------
           // Utils for Firebase
           // ---------------------------------------------------------------------------
@@ -377,17 +305,13 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           Future<void> deleteFromFirebase({String? path}) async {
             await this.refFirebase(path).delete();
           }
-          """ : ""}
-        }
-        """,
+          """
         ],
-        "\n",
-      );
-      return buffer.toString();
-    } catch (e) {
-      print(e);
-    }
-    return "";
+        "}"
+      ],
+      "\n",
+    );
+    return buffer.toString();
   }
 }
 
@@ -399,4 +323,62 @@ class BuilderGenerateModel extends SharedPartBuilder {
           [GeneratorModel()],
           "generate_model",
         );
+}
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+final modelToMappers = TMappers.unmodifiable({
+  r"^Model\w+\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}?.toJson().nullsRemoved().nullIfEmpty()";
+  },
+  r"^Model\w+$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}.toJson().nullsRemoved().nullIfEmpty()";
+  },
+});
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+final modelFromMappers = TMappers.unmodifiable({
+  r"^Model\w+\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    final className = e.keyMatchGroups?.first;
+    return "(){final l = letAs<Map>(${e.p}); return l != null ? $className.fromJson(l.map((final p0, final p1,) => MapEntry(p0.toString(), p1),),): null; }()";
+  },
+  r"^Model\w+$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    final className = e.keyMatchGroups?.first;
+    return "$className.fromJson((${e.p} as Map).map((final p0, final p1,) => MapEntry(p0.toString(), p1),),)";
+  },
+  r"^Model\w+\|let$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    final className = e.keyMatchGroups?.first;
+    return "(){final l = letMap<String, dynamic>(${e.p}); return l != null ? $className.fromJson(l): null; }()";
+  },
+});
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+String _subEventReplacement(
+  String fieldType,
+  String p,
+  TMappers allMappers,
+) {
+  final filtered = filterMappersForType(
+    fieldType,
+    allMappers,
+  );
+  if (filtered.isNotEmpty) {
+    final regExp = RegExp(filtered.entries.first.key);
+    final match = regExp.firstMatch(fieldType);
+    if (match != null) {
+      final event = MapperSubEvent.custom(
+        p,
+        Iterable.generate(match.groupCount + 1, (i) => match.group(i)!),
+      );
+      return filtered.entries.first.value(event);
+    }
+  }
+  return "// error";
 }

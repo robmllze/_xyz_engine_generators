@@ -55,7 +55,7 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_$constNameScreen = [${isOnlyAccessibleIfSignedIn ? "_LOCATION" : ""}];
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_OUT_$constNameScreen = [${isOnlyAccessibleIfSignedOut ? "_LOCATION" : ""}];
         
-        final _nameClass = "$nameClass";
+        const _NAME_CLASS = "$nameClass";
         String _tr(String key, {List<String>? args, Map<String, String>? namedArgs}) => "\$_L.\$key".toLowerCase().tr(args: args, namedArgs: namedArgs);
         
         SuperScreen? maker$nameClass(
