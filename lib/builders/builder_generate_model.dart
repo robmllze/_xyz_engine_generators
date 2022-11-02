@@ -87,7 +87,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
         if (fieldType.startsWith("Model")) {
           final a =
               "json${fieldName[0].toUpperCase() + (fieldName.length > 1 ? fieldName.substring(1) : "")}";
-          return "final $a = letMap(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty();\n"
+          return "final $a = letMap<String, dynamic>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty();\n"
               "$fieldName = $a != null ? $fieldType.fromJson($a): null";
         }
         // Handle Map.
@@ -102,7 +102,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             }
             return "$fieldName = letMap<$t1, $t2>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
           }
-          return "$fieldName = letMap(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
+          return "$fieldName = letMap<String, dynamic>(json[\"$fieldNameSnakeCase\"])?.nullIfEmpty()";
         }
         // Handle Set.
         if (fieldType.startsWith("Set")) {
