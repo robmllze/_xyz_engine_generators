@@ -1,0 +1,21 @@
+name: _xyz_engine_generators
+description:
+publish_to: none
+environment:
+  sdk: '>=2.18.2 <3.0.0'
+dependencies:
+  analyzer: ^5.2.0
+  build: ^2.3.1
+  glob: ^2.1.0
+  path: ^1.8.2
+  source_gen: ^1.2.6
+  xyz_utils:
+    git:
+      url: https://github.com/robmllze/xyz_utils.git
+      ref: master
+  xyz_engine_generators_annotations:
+    git:
+      url: https://github.com/robmllze/xyz_engine_generators_annotations.git
+      ref: master
+dev_dependencies:
+  build_runner: ^2.3.2

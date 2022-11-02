@@ -1,0 +1,64 @@
+# ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+#
+# XYZ Engine Generators
+#
+# References:
+# - https://pub.dev/packages/build_config
+# - https://pub.dev/packages/source_gen
+#
+# ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+builders:
+  # Builder 1
+  builder_generate_screen_access:
+    import: "package:_xyz_engine_generators/builders/builder_generate_screen_access.dart"
+    builder_factories: ["generateScreenAccess"]
+    build_extensions: {".dart": [".g.dart"]}
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
+  # Builder 2
+  builder_generate_screen_configuration:
+    import: "package:_xyz_engine_generators/builders/builder_generate_screen_configuration.dart"
+    builder_factories: ["generateScreenConfiguration"]
+    build_extensions: {".dart": [".g.dart"]}
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
+  # Builder 3
+  builder_generate_exports:
+    import: "package:_xyz_engine_generators/builders/builder_generate_exports.dart"
+    builder_factories: [
+      "generateExportsConfigs",
+      "generateExportsModels",
+      "generateExportsRouting",
+      "generateExportsScreens",
+      "generateExportsServices",
+      "generateExportsThemes",
+      "generateExportsUtils",
+      "generateExportsWidgets",
+      
+    ]
+    build_extensions: {
+      "$lib$": [
+        "configs/all_configs.dart",
+        "models/all_models.dart",
+        "routing/all_routing.dart",
+        "screens/all_screens.dart",
+        "services/all_services.dart",
+        "themes/all_themes.dart",
+        "utils/all_utils.dart",
+        "widgets/all_widgets.dart",
+      ],
+    }
+    auto_apply: dependents
+    build_to: source
+    applies_builders: ["source_gen|combining_builder"]
+  # Builder 4
+  builder_generate_model:
+    import: "package:_xyz_engine_generators/builders/builder_generate_model.dart"
+    builder_factories: ["generateModel"]
+    build_extensions: {".dart": [".g.dart"]}
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
