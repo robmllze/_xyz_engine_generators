@@ -47,6 +47,9 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
     buffer.writeAll(
       [
         """
+        // ignore_for_file: dead_code
+        // ignore_for_file: unused_element
+
         const _L = "screens.$nameClass";
         const _LOCATION = "$location";
         const LOCATION_NOT_REDIRECTABLE_$constNameScreen = [${!isRedirectable ? "_LOCATION" : ""}];
@@ -66,8 +69,9 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         ) {
           if (($isOnlyAccessibleIfSignedInAndVerified && !isSignedInAndVerified) ||
               ($isOnlyAccessibleIfSignedIn && !isSignedIn) ||
-              ($isOnlyAccessibleIfSignedOut && !isSignedOut))
+              ($isOnlyAccessibleIfSignedOut && !isSignedOut)) {
                 return null;
+          }
           final input = configuration.uri.toString();
           final hasMatch = RegExp(r"^(\\""\$_LOCATION"r")([\\?\\/].*)?\$").hasMatch(input);
           if (hasMatch) return $nameClass(configuration);

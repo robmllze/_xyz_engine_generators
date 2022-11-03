@@ -39,13 +39,16 @@ class GeneratorScreenConfiguration extends GeneratorForAnnotation<GenerateScreen
         .map((final k, final v) => MapEntry(k!.toStringValue(), v!.toStringValue()))
         .cast<String, String>()
         .entries;
-    final AAA = parameters.map((final l) {
+    // Prepare member variables.
+    final insertMemberVariables = parameters.map((final l) {
       final fieldName = l.key;
       final fieldType = l.value;
       return "final $fieldType $fieldName;";
     }).toList()
       ..sort();
-    final BBB = parameters.map((final l) {
+
+    // Prepare constructor parameters.
+    final insertConstructorParameters = parameters.map((final l) {
       final fieldName = l.key;
       //final fieldType = l.value;
       return "required this.$fieldName,";
@@ -53,22 +56,24 @@ class GeneratorScreenConfiguration extends GeneratorForAnnotation<GenerateScreen
       ..sort();
     buffer.writeAll(
       [
+        "class $nameClass extends MyRouteConfiguration {",
+        if (insertMemberVariables.isNotEmpty) ...[],
         """
         class $nameClass extends MyRouteConfiguration {
           //
           //
           //
 
-          ${AAA.join("\n")}
+          ${insertMemberVariables.join("\n")}
 
           //
           //
           //
 
           $nameClass({
-            ${BBB.join("\n")}
+            ${insertConstructorParameters.join("\n")}
             Map<String, String>? queryArguments,
-          }) : super("\$_LOCATION", queryArguments: queryArguments);
+          }) : super(_LOCATION, queryArguments: queryArguments);
 
         }
         """,
