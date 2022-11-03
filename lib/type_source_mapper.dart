@@ -220,12 +220,13 @@ class MapperSubEvent extends _MapperEvent {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-String typeSourceRemoveCleaned(String typeSource) {
-  var temp = typeSource.replaceAll(" ", "");
+String typeSourceRemoveOptions(String typeSource) {
+  var temp = typeSource //
+      .replaceAll(" ", "")
+      .replaceAll("|let", "");
   while (true) {
-    final matches = RegExp(r"\w+(\|clean)?\<([\w\[\]\+]+\??)(,[\w\[\]\+]+\??)*\>").allMatches(temp);
-    if (matches.isEmpty) break;
-    final match = matches.first;
+    final match = RegExp(r"\w+\|clean\<([\w\[\]\+]+\??)(,[\w\[\]\+]+\??)*\>").firstMatch(temp);
+    if (match == null) break;
     final group0 = match.group(0)!;
     temp = temp.replaceAll(
       group0,
@@ -237,8 +238,10 @@ String typeSourceRemoveCleaned(String typeSource) {
           .replaceAll(",", "+"),
     );
   }
-
-  return temp.replaceAll("[", "<").replaceAll("]", ">").replaceAll("+", ", ");
+  return temp //
+      .replaceAll("[", "<")
+      .replaceAll("]", ">")
+      .replaceAll("+", ", ");
 }
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -366,7 +369,7 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<bool>(${e.p})";
   },
-  r"^bool\|let$": (e) {
+  r"^bool\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letBool(${e.p})";
   },
@@ -379,7 +382,7 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<num>(${e.p})";
   },
-  r"^num\|let$": (e) {
+  r"^num\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letNum(${e.p})";
   },
@@ -392,7 +395,7 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<int>(${e.p})";
   },
-  r"^int\|let$": (e) {
+  r"^int\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letInt(${e.p})";
   },
@@ -405,7 +408,7 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<double>(${e.p})";
   },
-  r"^double\|let$": (e) {
+  r"^double\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letDouble(${e.p})";
   },
@@ -418,7 +421,7 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p}?.toString())";
   },
-  r"^String\|let$": (e) {
+  r"^String\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letString(${e.p})";
   },
@@ -431,7 +434,7 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "DateTime.tryParse(${e.p}.toString())";
   },
-  r"^DateTime\|let$": (e) {
+  r"^DateTime\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letDateTime(${e.p})";
   },

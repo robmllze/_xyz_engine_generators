@@ -53,7 +53,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     // Prepare member variables.
     final insertMemberVariables = parameters1.map((final l) {
       final fieldName = l.key;
-      final fieldType = typeSourceRemoveCleaned(l.value);
+      final fieldType = typeSourceRemoveOptions(l.value);
       return "$fieldType $fieldName;";
     }).toList()
       ..sort();
@@ -70,13 +70,13 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
       final fieldName = l.key;
       final fieldNameSnakeCase = fieldName.toSnakeCase();
       final fieldTypeSource = l.value;
-      final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
+      //final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
       final p = "json[\"$fieldNameSnakeCase\"]";
       final compiled = TypeSourceMapper.withDefaultFromMappers(modelFromMappers)
           .compile(fieldTypeSource, p)
           .replaceFirst(
               "#x0",
-              _subEventReplacement(fieldType, p, {
+              _subEventReplacement(fieldTypeSource, p, {
                 ...defaultFromMappers,
                 ...modelFromMappers,
               }));
@@ -89,7 +89,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
       final fieldName = l.key;
       final fieldNameSnakeCase = fieldName.toSnakeCase();
       final fieldTypeSource = l.value;
-      final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
+      final fieldType = typeSourceRemoveOptions(fieldTypeSource);
       final p = fieldName;
       final compiled = TypeSourceMapper.withDefaultToMappers(modelToMappers) //
           .compile(fieldType, p)
@@ -145,7 +145,15 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
 
           $nameClass.fromJson(Map<String, dynamic> json) {
-            ${insertFromJson.join(";\n")};
+            try {
+              ${insertFromJson.join(";\n")};
+            } catch (e) {
+              assert(
+                false,
+                "Exception (\${e.runtimeType}) caught at $nameClass.fromJson",
+              );
+              rethrow;
+            }
           }
 
           //
@@ -154,9 +162,19 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           @override
           Map<String, dynamic> toJson() {
-            return {
-              ${insertToJson.join(",\n")},
-            }..removeWhere((_, final l) => l == null);
+            try {
+              return mapToJson(
+                {
+                  ${insertToJson.join(",\n")},
+                }..removeWhere((_, final l) => l == null),
+              );
+            } catch (e) {
+              assert(
+                false,
+                "Exception (\${e.runtimeType}) caught at $nameClass.toJson",
+              );
+              rethrow;
+            }
           }
 
           //
@@ -344,12 +362,12 @@ final modelFromMappers = TMappers.unmodifiable({
   r"^Model\w+\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     final className = e.keyMatchGroups?.first;
-    return "(){final l = letAs<Map>(${e.p}); return l != null ? $className.fromJson(l.map((final p0, final p1,) => MapEntry(p0.toString(), p1),),): null; }()";
+    return "(){final l = letAs<Map>(${e.p}); return l != null ? $className.fromJson(l.map((final p0, final p1,) => MapEntry(p0.toString(), p1,),),): null; }()";
   },
   r"^Model\w+$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     final className = e.keyMatchGroups?.first;
-    return "$className.fromJson((${e.p} as Map).map((final p0, final p1,) => MapEntry(p0.toString(), p1),),)";
+    return "$className.fromJson((${e.p} as Map).map((final p0, final p1,) => MapEntry(p0.toString(), p1,),),)";
   },
   r"^Model\w+\|let$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
@@ -380,5 +398,5 @@ String _subEventReplacement(
       return filtered.entries.first.value(event);
     }
   }
-  return "// error";
+  return "null /* error */";
 }
