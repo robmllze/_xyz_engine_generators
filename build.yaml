@@ -18,14 +18,6 @@ builders:
     build_to: cache
     applies_builders: ["source_gen|combining_builder"]
   # Builder 2
-  builder_generate_screen_configuration:
-    import: "package:_xyz_engine_generators/builders/builder_generate_screen_configuration.dart"
-    builder_factories: ["generateScreenConfiguration"]
-    build_extensions: {".dart": [".g.dart"]}
-    auto_apply: dependents
-    build_to: cache
-    applies_builders: ["source_gen|combining_builder"]
-  # Builder 3
   builder_generate_exports:
     import: "package:_xyz_engine_generators/builders/builder_generate_exports.dart"
     builder_factories: [
@@ -54,7 +46,7 @@ builders:
     auto_apply: dependents
     build_to: source
     applies_builders: ["source_gen|combining_builder"]
-  # Builder 4
+  # Builder 3
   builder_generate_model:
     import: "package:_xyz_engine_generators/builders/builder_generate_model.dart"
     builder_factories: ["generateModel"]

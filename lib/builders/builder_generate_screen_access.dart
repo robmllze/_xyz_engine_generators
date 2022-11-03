@@ -41,27 +41,54 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
     final visitor = ModelVisitor();
     element.visitChildren(visitor);
     final buffer = StringBuffer();
-    final nameClass = visitor.nameClass.toString();
-    final constNameScreen = nameClass.substring("Screen".length).toSnakeCase().toUpperCase();
-    final location = "/${nameClass.toSnakeCase().substring("screen_".length)}";
+    final nameScreenClass = visitor.nameClass.toString();
+    final nameScreenConfigurationClass = "${nameScreenClass}Configuration";
+    final constNameScreen = nameScreenClass.substring("Screen".length).toSnakeCase().toUpperCase();
+    final location = "/${nameScreenClass.toSnakeCase().substring("screen_".length)}";
+
+    final configuration = annotation
+        .read("configuration")
+        .mapValue
+        .map((final k, final v) => MapEntry(k!.toStringValue(), v!.toStringValue()))
+        .cast<String, String>()
+        .entries;
+
+    // Prepare member variables.
+    final insertMemberVariables = configuration.map((final l) {
+      final fieldName = l.key;
+      final fieldType = l.value;
+      return "final $fieldType $fieldName;";
+    }).toList()
+      ..sort();
+
+    // Prepare constructor parameters.
+    final insertConstructorParameters = configuration.map((final l) {
+      final fieldName = l.key;
+      //final fieldType = l.value;
+      return "required this.$fieldName,";
+    }).toList()
+      ..sort();
+
     buffer.writeAll(
       [
         """
         // ignore_for_file: dead_code
         // ignore_for_file: unused_element
 
-        const _L = "screens.$nameClass";
+        const _L = "screens.$nameScreenClass";
         const _LOCATION = "$location";
+        const _NAME_SCREEN_CLASS = "$nameScreenClass";
+
         const LOCATION_NOT_REDIRECTABLE_$constNameScreen = [${!isRedirectable ? "_LOCATION" : ""}];
         const LOCATION_ACCESSIBLE_$constNameScreen = [${!isOnlyAccessibleIfSignedInAndVerified && !isOnlyAccessibleIfSignedIn && !isOnlyAccessibleIfSignedOut ? "_LOCATION" : ""}];
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_AND_VERIFIED_$constNameScreen = [${isOnlyAccessibleIfSignedInAndVerified ? "_LOCATION" : ""}];
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_$constNameScreen = [${isOnlyAccessibleIfSignedIn ? "_LOCATION" : ""}];
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_OUT_$constNameScreen = [${isOnlyAccessibleIfSignedOut ? "_LOCATION" : ""}];
         
-        const _NAME_CLASS = "$nameClass";
+
         String _tr(String key, {List<String>? args, Map<String, String>? namedArgs}) => "\$_L.\$key".toLowerCase().tr(args: args, namedArgs: namedArgs);
         
-        SuperScreen? maker$nameClass(
+        SuperScreen? maker$nameScreenClass(
         MyRouteConfiguration configuration,
         bool isSignedInAndVerified,
         bool isSignedIn,
@@ -72,14 +99,36 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
               ($isOnlyAccessibleIfSignedOut && !isSignedOut)) {
                 return null;
           }
-          final input = configuration.uri.toString();
-          final hasMatch = RegExp(r"^(\\""\$_LOCATION"r")([\\?\\/].*)?\$").hasMatch(input);
-          if (hasMatch) return $nameClass(configuration);
+          if (configuration.runtimeType == ${nameScreenClass}Configuration || configuration.uri?.toString().startsWith(_LOCATION) == true) {
+            return $nameScreenClass(configuration);
+          }
           return null;
         }
-      """,
+        """,
+        """
+        class $nameScreenConfigurationClass extends MyRouteConfiguration {
+          //
+          //
+          //
+
+          static const LOCATION = _LOCATION;
+          static const L = _L;
+          static const NAME_SCREEN_CLASS = _NAME_SCREEN_CLASS;
+          ${insertMemberVariables.join("\n")}
+
+          //
+          //
+          //
+          $nameScreenConfigurationClass({
+            ${insertConstructorParameters.join("\n")}
+            Map<String, String>? queryArguments,
+          }) : super(_LOCATION, queryArguments: queryArguments);
+
+        }
+        """,
       ],
     );
+
     return buffer.toString();
   }
 }
