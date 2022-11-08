@@ -4,15 +4,15 @@
 //
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+import 'package:xyz_engine_generators_annotations/xyz_engine_generators_annotations.dart';
+import 'package:xyz_utils/xyz_utils.dart';
+
 import 'package:build/build.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
-import 'package:xyz_engine_generators_annotations/xyz_engine_generators_annotations.dart';
-import 'package:xyz_utils/xyz_utils.dart';
-
-import '../model_visitor.dart';
-import '../type_source_mapper.dart';
+import '/model_visitor.dart';
+import '/type_source_mapper.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
@@ -58,10 +58,12 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     }).toList()
       ..sort();
 
-    // // Prepare constructor parameters.
+    // Prepare constructor parameters.
     final insertConstructorParameters = parameters1.map((final l) {
+      //final isNullable = typeSourceRemoveOptions(l.value).endsWith("?");
       final fieldName = l.key;
       return "this.$fieldName,";
+      //return "${isNullable ? "" : "required "}this.$fieldName,";
     }).toList()
       ..sort();
 
@@ -80,7 +82,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
                 ...defaultFromMappers,
                 ...modelFromMappers,
               }));
-      return "$fieldName = $compiled";
+      return "$fieldName: $compiled,";
     }).toList()
       ..sort();
 
@@ -100,7 +102,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               ...modelToMappers,
             }),
           );
-      return "\"$fieldNameSnakeCase\": $compiled";
+      return "\"$fieldNameSnakeCase\": $compiled,";
     }).toList()
       ..sort();
 
@@ -144,9 +146,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
 
-          $nameClass.fromJson(Map<String, dynamic> json) {
+          factory $nameClass.fromJson(Map<String, dynamic> json) {
             try {
-              ${insertFromJson.join(";\n")};
+              return $nameClass(${insertFromJson.join("\n")});
             } catch (e) {
               assert(
                 false,
@@ -165,7 +167,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             try {
               return mapToJson(
                 {
-                  ${insertToJson.join(",\n")},
+                  ${insertToJson.join("\n")}
                 }..removeWhere((_, final l) => l == null),
               );
             } catch (e) {
@@ -398,5 +400,5 @@ String _subEventReplacement(
       return filtered.entries.first.value(event);
     }
   }
-  return "null /* error */";
+  return "null /* ERROR: Unsupported type and/or only nullable types supported */";
 }

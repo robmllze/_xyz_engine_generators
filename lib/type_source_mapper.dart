@@ -247,28 +247,28 @@ String typeSourceRemoveOptions(String typeSource) {
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 final defaultToMappers = TMappers.unmodifiable({
-  r"^Map$": /* clean */ (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "${e.p}.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
-  },
+  // r"^Map$": /* clean */ (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "${e.p}.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
+  // },
   r"^Map\?$": /* clean */ (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "${e.p}?.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
   },
   //
-  r"^List$": /* clean */ (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "${e.p}.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
-  },
+  // r"^List$": /* clean */ (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "${e.p}.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  // },
   r"^List\?$": /* clean */ (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "${e.p}?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
   },
   //
-  r"^Set$": /* clean */ (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "${e.p}.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
-  },
+  // r"^Set$": /* clean */ (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "${e.p}.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  // },
   r"^Set\?$": /* clean */ (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "${e.p}?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
@@ -279,19 +279,28 @@ final defaultToMappers = TMappers.unmodifiable({
     return "${e.p}";
   },
   //
-  r"^String$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}.nullIfEmpty()";
-  },
+  // r"^String$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "${e.p}.nullIfEmpty()";
+  // },
   r"^String\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}?.nullIfEmpty()";
   },
   //
-  r"^DateTime$": (e) {
+  // r"^Uri$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "${e.p}.toString().nullIfEmpty()";
+  // },
+  r"^Uri\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}.toUtc().toIso8601String()";
+    return "${e.p}?.toString().nullIfEmpty()";
   },
+  //
+  // r"^DateTime$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "${e.p}.toUtc().toIso8601String()";
+  // },
   r"^DateTime\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}?.toUtc().toIso8601String()";
@@ -301,70 +310,70 @@ final defaultToMappers = TMappers.unmodifiable({
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 final defaultFromMappers = TMappers.unmodifiable({
-  r"^Map$": (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as Map).map((${e.args}) => MapEntry(${e.hashes},),)";
-  },
+  // r"^Map$": (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "(${e.p} as Map).map((${e.args}) => MapEntry(${e.hashes},),)";
+  // },
   r"^Map\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "letAs<Map>(${e.p})?.map((${e.args}) => MapEntry(${e.hashes},),)";
   },
-  r"^Map\|clean$": (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as Map).map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
-  },
+  // r"^Map\|clean$": (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "(${e.p} as Map).map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
+  // },
   r"^Map\|clean\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "letAs<Map>(${e.p})?.map((${e.args}) => MapEntry(${e.hashes},),).nullsRemoved().nullIfEmpty()";
   },
   //
-  r"^List$": (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as List).map((${e.args}) => ${e.hashes},).toList()";
-  },
+  // r"^List$": (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "(${e.p} as List).map((${e.args}) => ${e.hashes},).toList()";
+  // },
   r"^List\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "letAs<List>(${e.p})?.map((${e.args}) => ${e.hashes},).toList()";
   },
-  r"^List\|clean$": (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as List).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
-  },
+  // r"^List\|clean$": (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "(${e.p} as List).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
+  // },
   r"^List\|clean\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "letAs<List>(${e.p})?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
   },
   //
-  r"^Set$": (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).toSet()";
-  },
+  // r"^Set$": (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).toSet()";
+  // },
   r"^Set\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "letAs<Set>(${e.p})?.map((${e.args}) => ${e.hashes},).toSet()";
   },
-  r"^Set\|clean$": (e) {
-    if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
-  },
+  // r"^Set\|clean$": (e) {
+  //   if (e is! MapperBaseEvent) throw TypeError();
+  //   return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
+  // },
   r"^Set\|clean\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
     return "letAs<Set>(${e.p})?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
   },
   //
-  r"^dynamic$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}";
-  },
+  // r"^dynamic$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "${e.p}";
+  // },
   r"^dynamic\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}";
   },
   //
-  r"^bool$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "(${e.p} as bool)";
-  },
+  // r"^bool$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "(${e.p} as bool)";
+  // },
   r"^bool\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<bool>(${e.p})";
@@ -374,10 +383,10 @@ final defaultFromMappers = TMappers.unmodifiable({
     return "letBool(${e.p})";
   },
   //
-  r"^num$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "(${e.p} as num)";
-  },
+  // r"^num$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "(${e.p} as num)";
+  // },
   r"^num\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<num>(${e.p})";
@@ -387,10 +396,10 @@ final defaultFromMappers = TMappers.unmodifiable({
     return "letNum(${e.p})";
   },
   //
-  r"^int$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "(${e.p} as int)";
-  },
+  // r"^int$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "(${e.p} as int)";
+  // },
   r"^int\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<int>(${e.p})";
@@ -400,10 +409,10 @@ final defaultFromMappers = TMappers.unmodifiable({
     return "letInt(${e.p})";
   },
   //
-  r"^double$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "(${e.p} as double)";
-  },
+  // r"^double$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "(${e.p} as double)";
+  // },
   r"^double\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<double>(${e.p})";
@@ -413,10 +422,10 @@ final defaultFromMappers = TMappers.unmodifiable({
     return "letDouble(${e.p})";
   },
   //
-  r"^String$": (e) {
-    if (e is! MapperSubEvent) throw TypeError();
-    return "(${e.p}.toString())";
-  },
+  // r"^String$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "(${e.p}.toString())";
+  // },
   r"^String\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "(${e.p}?.toString())";
@@ -426,10 +435,19 @@ final defaultFromMappers = TMappers.unmodifiable({
     return "letString(${e.p})";
   },
   //
-  r"^DateTime$": (e) {
+  // r"^Uri$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "Uri.parse(${e.p}.toString())";
+  // },
+  r"^Uri\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "DateTime.parse(${e.p}.toString())";
+    return "Uri.tryParse(${e.p}.toString())";
   },
+  //
+  // r"^DateTime$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "DateTime.parse(${e.p}.toString())";
+  // },
   r"^DateTime\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "DateTime.tryParse(${e.p}.toString())";

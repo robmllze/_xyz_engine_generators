@@ -4,14 +4,14 @@
 //
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+import 'package:xyz_engine_generators_annotations/xyz_engine_generators_annotations.dart';
+import 'package:xyz_utils/xyz_utils.dart';
+
 import 'package:build/build.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
-import 'package:xyz_engine_generators_annotations/xyz_engine_generators_annotations.dart';
-import 'package:xyz_utils/xyz_utils.dart';
-
-import '../model_visitor.dart';
+import '/model_visitor.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
@@ -86,7 +86,7 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_OUT_$constNameScreen = [${isOnlyAccessibleIfSignedOut ? "_LOCATION" : ""}];
         
 
-        String _tr(String key, {List<String>? args, Map<String, String>? namedArgs}) => "\$_L.\$key".toLowerCase().tr(args: args, namedArgs: namedArgs);
+        T? _tr<T>(String key, [Map<dynamic, dynamic> args = const {}]) => "\$_L.\$key".toLowerCase().tr<T>(args);
         
         SuperScreen? maker$nameScreenClass(
         MyRouteConfiguration configuration,
@@ -120,9 +120,10 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
           //
           //
           $nameScreenConfigurationClass({
+            String? key,
             ${insertConstructorParameters.join("\n")}
             Map<String, String>? queryArguments,
-          }) : super(_LOCATION, queryArguments: queryArguments);
+          }) : super(_LOCATION, key: key, queryArguments: queryArguments);
 
         }
         """,
