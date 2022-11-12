@@ -350,15 +350,15 @@ final defaultFromMappers = TMappers.unmodifiable({
   },
   r"^Set\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
-    return "letAs<Set>(${e.p})?.map((${e.args}) => ${e.hashes},).toSet()";
+    return "letAs<List>(${e.p})?.map((${e.args}) => ${e.hashes},).toSet()";
   },
   r"^Set\|clean$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
-    return "(${e.p} as Set).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
+    return "(${e.p} as List).map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
   },
   r"^Set\|clean\?$": (e) {
     if (e is! MapperBaseEvent) throw TypeError();
-    return "letAs<Set>(${e.p})?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
+    return "letAs<List>(${e.p})?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toSet()";
   },
   //
   r"^dynamic$": (e) {
