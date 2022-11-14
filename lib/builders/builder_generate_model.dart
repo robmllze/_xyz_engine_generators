@@ -262,11 +262,11 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           String toString() => this.toJson().toString();
         """,
 
-        // Utils for Firebase
+        // Utils for Firestore
         if (path.isNotEmpty) ...[
           """
           // ---------------------------------------------------------------------------
-          // Utils for Firebase
+          // Utils for Firestore
           // ---------------------------------------------------------------------------
 
           static const PATH = "$path";
@@ -284,7 +284,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
 
           @override
-          DocumentReference<Map<String, dynamic>> refFirebase([String? path]) {
+          DocumentReference<Map<String, dynamic>> refFirestore([String? path]) {
             return G.fbFirestore.documentReference(_p(path, this.toJson()));
           }
 
@@ -293,7 +293,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
 
           @override
-          Future<void> toFirebase({
+          Future<void> toFirestore({
             bool merge = true,
             String? path,
           }) async {
@@ -308,7 +308,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
 
-          static Future<$nameClass?> fromFirebase({
+          static Future<$nameClass?> fromFirestore({
             String? id,
             String? path,
           }) async {
@@ -322,8 +322,8 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
 
           @override
-          Future<void> deleteFromFirebase({String? path}) async {
-            await this.refFirebase(path).delete();
+          Future<void> deleteFromFirestore({String? path}) async {
+            await this.refFirestore(path).delete();
           }
           """
         ],
