@@ -283,7 +283,6 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
 
-          @override
           DocumentReference<Map<String, dynamic>> refFirestore([String? path]) {
             return G.fbFirestore.documentReference(_p(path, this.toJson()));
           }
@@ -292,7 +291,6 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
 
-          @override
           Future<void> toFirestore({
             bool merge = true,
             String? path,
@@ -321,7 +319,6 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
 
-          @override
           Future<void> deleteFromFirestore({String? path}) async {
             await this.refFirestore(path).delete();
           }
