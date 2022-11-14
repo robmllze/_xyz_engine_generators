@@ -23,6 +23,6 @@ dependencies:
   xyz_engine_generators_annotations:
     git:
       url: https://github.com/robmllze/xyz_engine_generators_annotations.git
-      ref: cb349a8
+      ref: 5b11b67
 dev_dependencies:
   build_runner: ^2.3.2
