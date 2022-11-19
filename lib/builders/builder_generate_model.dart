@@ -250,7 +250,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
         /// Redefine this function to override [toServer].
         static Future<void> Function(
-            ModelUserData model, {
+            $nameClass model, {
             bool merge,
             String? pathOverride,
           }) toServerOverride = (
@@ -259,7 +259,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               final pathOverride,
             }) async {
             final json = model.toJson();
-            final path = _p(pathOverride, json);
+            final path = _completePath(pathOverride, json);
             await G.fbFirestore.documentReference(path).set(
                   json,
                   SetOptions(merge: merge),
