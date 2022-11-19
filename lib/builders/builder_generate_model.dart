@@ -156,7 +156,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             try {
               return $nameClass(${insertFromJson.join("\n")});
             } catch (e) {
-               throw Exception("[$nameClass.fromJson] Failed to convert JSON to $nameClass due to: \$e");
+               throw Exception(
+                "[$nameClass.fromJson] Failed to convert JSON to $nameClass due to: \$e",
+                );
             }
           }
 
@@ -176,7 +178,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
                 }..removeWhere((_, final l) => l == null),
               );
             } catch (e) {
-              throw Exception("[$nameClass.toJson] Failed to convert $nameClass to JSON due to: \$e");
+              throw Exception(
+                "[$nameClass.toJson] Failed to convert $nameClass to JSON due to: \$e",
+                );
             }
           }
           
@@ -187,7 +191,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             if (other is $nameClass) {
               return $nameClass(${insertNewWith.join("\n")}) as T;
             }
-            throw Exception("[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}");
+            throw Exception(
+              "[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
+              );
           }
           
           /// Returns a new empty instance of [$nameClass].
@@ -209,7 +215,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               ${insertUpdateWith.join("\n")}
               return;
             }
-            throw Exception("[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}");
+            throw Exception(
+              "[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
+              );
           }
 
           @override
@@ -275,7 +283,17 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             bool merge = true,
             String? pathOverride,
           }) async {
-            await toServerOverride(this, merge: merge, pathOverride: pathOverride);
+            try {
+              await toServerOverride(
+                this,
+                merge: merge,
+                pathOverride: pathOverride,
+              );
+            } catch (e) {
+              throw Exception(
+                "[$nameClass.newOverride] Failed to write model to server due to \$e",
+              );
+            }
           }
 
           /// Returns the model identified by [id] from the server at [SKELETON_PATH]
@@ -288,11 +306,17 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             String id, {
             String? pathOverride,
           }) async {
-            final ref = G.fbFirestore.documentReference(
-              _completePath(pathOverride, {"id": id}),
-            );
-            final json = (await ref.get()).data();
-            return json != null ? $nameClass.fromJson(json) : null;
+            try {
+              final ref = G.fbFirestore.documentReference(
+                _completePath(pathOverride, {"id": id}),
+              );
+              final json = (await ref.get()).data();
+              return json != null ? $nameClass.fromJson(json) : null;
+            } catch (e) {
+              throw Exception(
+                "[$nameClass.newOverride] Failed to read model from server due to \$e",
+              );
+            }
           };
 
           /// Redefine this function to override [deleteFromServer].
@@ -307,7 +331,13 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// [pathOverride] if provided.
           @override
           Future<void> deleteFromServer({String? pathOverride}) async {
-            await deleteFromServerOverride(this, pathOverride: pathOverride);
+            try {
+              await deleteFromServerOverride(this, pathOverride: pathOverride);
+            } catch (e) {
+              throw Exception(
+                "[$nameClass.newOverride] Failed to delete model from server due to \$e",
+              );
+            }
           }
           """
         ],
