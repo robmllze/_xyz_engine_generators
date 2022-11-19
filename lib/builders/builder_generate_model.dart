@@ -204,7 +204,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// Updates `this` fields from the fields of [other].
           @override
           void updateWith<T extends GeneratedModel>(T other) {
-            if (other is! $nameClass) {
+            if (other is $nameClass) {
               ${insertUpdateWith.join("\n")}
             }
             throw Exception("[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}");
