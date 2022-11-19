@@ -274,7 +274,7 @@ final defaultToMappers = TMappers.unmodifiable({
     return "${e.p}?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
   },
   //
-  r"^(dynamic|bool|num|int|double)\??$": (e) {
+  r"^(dynamic|bool|num|int|double|Timestamp)\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}";
   },
@@ -407,6 +407,15 @@ final defaultFromMappers = TMappers.unmodifiable({
   r"^int\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letInt(${e.p})";
+  },
+  //
+  r"^Timestamp$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "(${e.p} as Timestamp)";
+  },
+  r"^Timestamp\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letAs<Timestamp>(${e.p})";
   },
   //
   r"^double$": (e) {

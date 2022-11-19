@@ -37,7 +37,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     final buffer = StringBuffer();
     final nameClass = visitor.nameClass?.replaceFirst("_", "");
     final path = annotation.read("path").stringValue;
-    final parameters0 = annotation
+    final params = annotation
         .read("parameters")
         .mapValue
         .map(
@@ -48,18 +48,26 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
         )
         .cast<String, String>()
         .entries;
-    final parameters1 = parameters0.toList()..removeWhere((final l) => l.key == "id");
+
+    final paramsWithoutId = params.toList()..removeWhere((final l) => l.key == "id");
+    final paramsWithId = paramsWithoutId..add(MapEntry("id", "String?"));
 
     // Prepare member variables.
-    final insertMemberVariables = parameters1.map((final l) {
+    final insertMemberVariables = paramsWithoutId.map((final l) {
       final fieldName = l.key;
+      final fieldKey = fieldName.toSnakeCase();
       final fieldType = typeSourceRemoveOptions(l.value);
-      return "$fieldType $fieldName;";
+      return [
+        "/// Variable: \"fieldName\"",
+        "static const k${fieldName.capitalize()} = \"$fieldKey\";",
+        "/// Key: \"fieldKey\"",
+        "$fieldType $fieldName;",
+      ].join("\n");
     }).toList()
       ..sort();
 
     // Prepare constructor parameters.
-    final insertConstructorParameters = parameters1.map((final l) {
+    final insertConstructorParameters = paramsWithoutId.map((final l) {
       //final isNullable = typeSourceRemoveOptions(l.value).endsWith("?");
       final fieldName = l.key;
       return "this.$fieldName,";
@@ -68,7 +76,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
       ..sort();
 
     // Prepare fromJson.
-    final insertFromJson = parameters0.map((final l) {
+    final insertFromJson = paramsWithId.map((final l) {
       final fieldName = l.key;
       final fieldNameSnakeCase = fieldName.toSnakeCase();
       final fieldTypeSource = l.value;
@@ -87,7 +95,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
       ..sort();
 
     // Prepare toJson.
-    final insertToJson = parameters0.map((final l) {
+    final insertToJson = paramsWithId.map((final l) {
       final fieldName = l.key;
       final fieldNameSnakeCase = fieldName.toSnakeCase();
       final fieldTypeSource = l.value;
@@ -106,15 +114,15 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     }).toList()
       ..sort();
 
-    // Prepare newWith.
-    final insertNewWith = parameters0.map((final l) {
+    // Prepare newOverride.
+    final insertNewWith = paramsWithId.map((final l) {
       final fieldName = l.key;
       return "$fieldName: other.$fieldName ?? this.$fieldName,";
     }).toList()
       ..sort();
 
     // Prepare updateWith.
-    final insertUpdateWith = parameters0.map((final l) {
+    final insertUpdateWith = paramsWithId.map((final l) {
       final fieldName = l.key;
       return "if (other.$fieldName != null) { this.$fieldName = other.$fieldName; }";
     }).toList()
@@ -130,11 +138,12 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
 
           ${insertMemberVariables.join("\n")}
-          
-          //
-          //
-          //
 
+          //
+          //
+          //
+          
+          /// Constructs a new instance of [$nameClass] identified by [id].
           $nameClass({
             String? id,
             ${insertConstructorParameters.join("\n")}
@@ -142,28 +151,23 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             super.id = id;
           }
 
-          //
-          //
-          //
-
-          factory $nameClass.fromJson(Map<String, dynamic> json) {
+          /// Converts a JSON object to a $nameClass object.
+          factory $nameClass.fromJson(Json json) {
             try {
               return $nameClass(${insertFromJson.join("\n")});
             } catch (e) {
-              assert(
-                false,
-                "Exception (\${e.runtimeType}) caught at $nameClass.fromJson",
-              );
-              rethrow;
+               throw Exception("[$nameClass.fromJson] Failed to convert JSON to $nameClass due to: \$e");
             }
           }
 
-          //
-          //
-          //
+          /// Returns a copy of `this` model.
+          T copy<T extends GeneratedModel>(T other) {
+            return $nameClass()..updateWith(other);
+          }
 
           @override
-          Map<String, dynamic> toJson() {
+          /// Converts a $nameClass object to a JSON object.
+          Json toJson() {
             try {
               return mapToJson(
                 {
@@ -171,73 +175,40 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
                 }..removeWhere((_, final l) => l == null),
               );
             } catch (e) {
-              assert(
-                false,
-                "Exception (\${e.runtimeType}) caught at $nameClass.toJson",
-              );
-              rethrow;
+              throw Exception("[$nameClass.toJson] Failed to convert $nameClass to JSON due to: \$e");
             }
           }
-
-          //
-          //
-          //
-
-          /// Returns a new instance of [$nameClass] with the fields in
-          /// [other] merged with/overriding the current fields.
-          @override
-          T newWithJson<T extends GeneratedModel>(Map<String, dynamic> other) {
-            return $nameClass.fromJson(this.toJson()..addAll(other)) as T;
-          }
-
-          //
-          //
-          //
           
-          /// Returns a new instance of [$nameClass] with the fields in
-          /// [other] merged with/overriding  the current fields.
+          /// Returns a copy of `this` object with the fields in [other] overriding
+          /// `this` fields. NB: [other] must be of type $nameClass.
           @override
-          T newWith<T extends GeneratedModel>(T other) {
-            assert(other is $nameClass);
-            return (other is $nameClass ? $nameClass(${insertNewWith.join("\n")}): $nameClass()) as T;
+          T newOverride<T extends GeneratedModel>(T other) {
+            if (other is! $nameClass) {
+              throw Exception("[$nameClass.newOverride] Expected "other" to be of type $nameClass" and not \${other.runtimeType}");
+            }
+            return $nameClass(${insertNewWith.join("\n")}) as T;
           }
-
-          //
-          //
-          //
           
-          /// Returns a new instance of [$nameClass] with empty fields.
+          /// Returns a new empty instance of [$nameClass].
           @override
           T newEmpty<T extends GeneratedModel>() {
             return $nameClass() as T;
           }
-
-          //
-          //
-          //
           
-          /// Updates fields from the fields of [other].
+          /// Updates `this` fields from the fields of [other].
           @override
-          void updateWithJson(Map<String, dynamic> other) {
+          void updateWithJson(Json other) {
             this.updateWith($nameClass.fromJson(other));
           }
-
-          //
-          //
-          //
           
-          /// Updates fields from the fields of [other].
+          /// Updates `this` fields from the fields of [other].
           @override
           void updateWith<T extends GeneratedModel>(T other) {
-            assert(other is $nameClass);
-            if (other is $nameClass) {
-              ${insertUpdateWith.join("\n")}
+            if (other is! $nameClass) {
+              throw Exception("[$nameClass.newOverride] Expected "other" to be of type $nameClass" and not \${other.runtimeType}");
             }
+            ${insertUpdateWith.join("\n")}
           }
-
-          //
-          //
-          //
 
           @override
           bool operator ==(Object other) {
@@ -247,83 +218,94 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             return false;
           }
 
-          //
-          //
-          //
-
           @override
           int get hashCode => this.toJson().hashCode;
-
-          //
-          //
-          //
 
           @override
           String toString() => this.toJson().toString();
         """,
-
-        // Utils for Firestore
         if (path.isNotEmpty) ...[
           """
           // ---------------------------------------------------------------------------
-          // Utils for Firestore
+          // SERVER UTILS
           // ---------------------------------------------------------------------------
 
-          static const PATH = "$path";
+          /// Incomplete path to the model on the server.
+          static const SKELETON_PATH = "$path";
 
-          //
-          //
-          //
-
-          static String _p(String? path, Map<String, dynamic> json) {
-            return (path ?? PATH).replaceHandlebars(json, "{", "}");
+          /// Completes [SKELETON_PATH] by replacing the handlebars with the
+          /// fields in [json].
+          static String _completePath(String? pathOverride, Json json) {
+            return (pathOverride ?? SKELETON_PATH).replaceHandlebars(json, "{", "}");
           }
 
-          //
-          //
-          //
-          
+          /// Returns a reference to this model on the server at [SKELETON_PATH] or at
+          /// [pathOverride] if provided.
           @override
-          DocumentReference<Map<String, dynamic>> refFirestore([String? path]) {
-            return G.fbFirestore.documentReference(_p(path, this.toJson()));
-          }
-
-          //
-          //
-          //
-          
-          @override
-          Future<void> toFirestore({
-            bool merge = true,
-            String? path,
-          }) async {
-            final json = this.toJson();
-            await G.fbFirestore.documentReference(_p(path, json)).set(
-              json,
-              SetOptions(merge: merge),
+          DocumentReference<Json> refServer([String? pathOverride]) {
+            return G.fbFirestore.documentReference(
+              _completePath(pathOverride, this.toJson()),
             );
           }
 
-          //
-          //
-          //
-
-          static Future<$nameClass?> fromFirestore({
-            String? id,
-            String? path,
+        /// Redefine this function to override [toServer].
+        static Future<void> Function(
+            ModelUserData model, {
+            bool merge,
+            String? pathOverride,
+          }) toServerOverride = (
+              final model, {
+              final merge,
+              final pathOverride,
+            }) async {
+            final json = model.toJson();
+            final path = _p(pathOverride, json);
+            await G.fbFirestore.documentReference(path).set(
+                  json,
+                  SetOptions(merge: merge),
+                );
+          };
+          
+          /// Writes this model to the server at [SKELETON_PATH] or at [pathOverride]
+          /// if provided.
+          @override
+          Future<void> toServer({
+            bool merge = true,
+            String? pathOverride,
           }) async {
-            final ref = G.fbFirestore.documentReference(_p(path, {"id": id}));
-            final json = (await ref.get()).data();
-            return json != null ? $nameClass.fromJson(json) : null;
+            await toServerOverride(this, merge: merge, pathOverride: pathOverride);
           }
 
-          //
-          //
-          //
+          /// Returns the model identified by [id] from the server at [SKELETON_PATH]
+          /// or at [pathOverride] if provided. Redefine this function to override
+          /// its behavior.
+          static Future<$nameClass?> Function(
+            String id, {
+            String? pathOverride,
+          }) fromServer = (
+            String id, {
+            String? pathOverride,
+          }) async {
+            final ref = G.fbFirestore.documentReference(
+              _completePath(pathOverride, {"id": id}),
+            );
+            final json = (await ref.get()).data();
+            return json != null ? $nameClass.fromJson(json) : null;
+          };
+
+          /// Redefine this function to override [deleteFromServer].
+          static Future<void> Function(
+            $nameClass model, {
+              String? pathOverride
+            }) deleteFromServerOverride = (final model, {final pathOverride}) async {
+            await model.refFirestore(pathOverride).delete();
+          };
           
+          /// Deletes this model from the server at [SKELETON_PATH] or at
+          /// [pathOverride] if provided.
           @override
-          Future<void> deleteFromFirestore({String? path}) async {
-            await this.refFirestore(path).delete();
+          Future<void> deleteFromServer({String? pathOverride}) async {
+            await deleteFromServerOverride(this, pathOverride: pathOverride);
           }
           """
         ],
