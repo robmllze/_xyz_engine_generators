@@ -19,7 +19,7 @@ dependencies:
   xyz_utils:
     git:
       url: https://github.com/robmllze/xyz_utils.git
-      ref: 422729c
+      ref: 269b437
   xyz_engine_generators_annotations:
     git:
       url: https://github.com/robmllze/xyz_engine_generators_annotations.git
