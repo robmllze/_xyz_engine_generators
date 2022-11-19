@@ -50,7 +50,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
         .entries;
 
     final paramsWithoutId = params.toList()..removeWhere((final l) => l.key == "id");
-    final paramsWithId = paramsWithoutId..add(MapEntry("id", "String?"));
+    final paramsWithId = List.of(paramsWithoutId)..add(MapEntry("id", "String?"));
 
     // Prepare member variables.
     final insertMemberVariables = paramsWithoutId.map((final l) {
@@ -58,9 +58,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
       final fieldKey = fieldName.toSnakeCase();
       final fieldType = typeSourceRemoveOptions(l.value);
       return [
-        "/// Variable: \"fieldName\"",
+        "/// Variable: \"$fieldName\"",
         "static const k${fieldName.capitalize()} = \"$fieldKey\";",
-        "/// Key: \"fieldKey\"",
+        "/// Key: \"$fieldKey\"",
         "$fieldType $fieldName;",
       ].join("\n");
     }).toList()
@@ -162,7 +162,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           /// Returns a copy of `this` model.
           T copy<T extends GeneratedModel>(T other) {
-            return $nameClass()..updateWith(other);
+            return ($nameClass()..updateWith(other)) as T;
           }
 
           @override
@@ -183,10 +183,10 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// `this` fields. NB: [other] must be of type $nameClass.
           @override
           T newOverride<T extends GeneratedModel>(T other) {
-            if (other is! $nameClass) {
-              //throw Exception("[$nameClass.newOverride] Expected \"other\" to be of type $nameClass and not \${other.runtimeType}");
+            if (other is $nameClass) {
+              return $nameClass(${insertNewWith.join("\n")}) as T;
             }
-            return $nameClass(${insertNewWith.join("\n")}) as T;
+            throw Exception("[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}");
           }
           
           /// Returns a new empty instance of [$nameClass].
@@ -205,9 +205,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           void updateWith<T extends GeneratedModel>(T other) {
             if (other is! $nameClass) {
-              //throw Exception("[$nameClass.newOverride] Expected \"other\" to be of type $nameClass and not \${other.runtimeType}");
+              ${insertUpdateWith.join("\n")}
             }
-            ${insertUpdateWith.join("\n")}
+            throw Exception("[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}");
           }
 
           @override
@@ -255,7 +255,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             String? pathOverride,
           }) toServerOverride = (
               final model, {
-              final merge,
+              final merge = true,
               final pathOverride,
             }) async {
             final json = model.toJson();
@@ -298,7 +298,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             $nameClass model, {
               String? pathOverride
             }) deleteFromServerOverride = (final model, {final pathOverride}) async {
-            await model.refFirestore(pathOverride).delete();
+            await model.refServer(pathOverride).delete();
           };
           
           /// Deletes this model from the server at [SKELETON_PATH] or at
