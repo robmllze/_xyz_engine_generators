@@ -184,7 +184,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           T newOverride<T extends GeneratedModel>(T other) {
             if (other is! $nameClass) {
-              throw Exception("[$nameClass.newOverride] Expected "other" to be of type $nameClass" and not \${other.runtimeType}");
+              throw Exception("[$nameClass.newOverride] Expected "other" to be of type $nameClass and not \${other.runtimeType}");
             }
             return $nameClass(${insertNewWith.join("\n")}) as T;
           }
@@ -205,7 +205,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           void updateWith<T extends GeneratedModel>(T other) {
             if (other is! $nameClass) {
-              throw Exception("[$nameClass.newOverride] Expected "other" to be of type $nameClass" and not \${other.runtimeType}");
+              throw Exception("[$nameClass.newOverride] Expected "other" to be of type $nameClass and not \${other.runtimeType}");
             }
             ${insertUpdateWith.join("\n")}
           }
