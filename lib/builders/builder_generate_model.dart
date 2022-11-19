@@ -163,7 +163,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           }
 
           /// Returns a copy of `this` model.
-          @overrride
+          @override
           T copy<T extends GeneratedModel>(T other) {
             return ($nameClass()..updateWith(other)) as T;
           }
