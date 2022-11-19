@@ -439,6 +439,10 @@ final defaultFromMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "letAs<Timestamp>(${e.p})";
   },
+  r"^Timestamp\|let\??$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "letTimestamp(${e.p})";
+  },
   //
   r"^double$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
