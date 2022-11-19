@@ -175,6 +175,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               return mapToJson(
                 {
                   ${insertToJson.join("\n")}
+                  typesAllowed: {Timestamp},
                 }..removeWhere((_, final l) => l == null),
               );
             } catch (e) {
