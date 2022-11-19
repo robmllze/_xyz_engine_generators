@@ -279,6 +279,15 @@ final defaultToMappers = TMappers.unmodifiable({
     return "${e.p}";
   },
   //
+  r"^Duration$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}.inMicroseconds";
+  },
+  r"^Duration\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}?.inMicroseconds";
+  },
+  //
   r"^String$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}.nullIfEmpty()";
@@ -407,6 +416,19 @@ final defaultFromMappers = TMappers.unmodifiable({
   r"^int\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letInt(${e.p})";
+  },
+  //
+  r"^Duration$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "Duration(microseconds: ${e.p} as int)";
+  },
+  r"^Duration\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "() { final a = letAs<int>(${e.p}); return a != null ? Duration(microseconds: a): null; }()";
+  },
+  r"^Duration\|let\??$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "() { final a = letInt(${e.p}); return a != null ? Duration(microseconds: a): null; }()";
   },
   //
   r"^Timestamp$": (e) {
