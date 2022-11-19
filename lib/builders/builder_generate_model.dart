@@ -217,7 +217,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               return;
             }
             throw Exception(
-              "[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
+              "[$nameClass.updateWith] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
               );
           }
 
@@ -292,7 +292,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               );
             } catch (e) {
               throw Exception(
-                "[$nameClass.newOverride] Failed to write model to server due to \$e",
+                "[$nameClass.toServer] Failed to write model to server due to \$e",
               );
             }
           }
@@ -315,7 +315,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               return json != null ? $nameClass.fromJson(json) : null;
             } catch (e) {
               throw Exception(
-                "[$nameClass.newOverride] Failed to read model from server due to \$e",
+                "[$nameClass.fromServer] Failed to read model from server due to \$e",
               );
             }
           };
@@ -336,7 +336,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               await deleteFromServerOverride(this, pathOverride: pathOverride);
             } catch (e) {
               throw Exception(
-                "[$nameClass.newOverride] Failed to delete model from server due to \$e",
+                "[$nameClass.deleteFromServer] Failed to delete model from server due to \$e",
               );
             }
           }
