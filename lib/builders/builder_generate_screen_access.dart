@@ -44,28 +44,107 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
     final nameScreenClass = visitor.nameClass.toString();
     final nameScreenConfigurationClass = "${nameScreenClass}Configuration";
     final constNameScreen = nameScreenClass.substring("Screen".length).toSnakeCase().toUpperCase();
+
     final location = "/${nameScreenClass.toSnakeCase().substring("screen_".length)}";
 
-    final configuration = annotation
-        .read("configuration")
+    final pathSegments =
+        annotation.read("pathSegments").listValue.map((final v) => v.toStringValue()!);
+
+    final pathSegmentsA = pathSegments.map((final l) {
+      final fieldName = l;
+      return "String? $fieldName,";
+    }).toList()
+      ..sort();
+
+    final pathSegmentsB = pathSegments.map((final l) {
+      final fieldName = l;
+      return "$fieldName ?? \"\",";
+    }).toList()
+      ..sort();
+
+    var n = 0;
+    final pathSegmentsC = pathSegments.map((final l) {
+      final fieldName = l;
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
+      return [
+        "/// Key corresponding to the value `$fieldName`",
+        "static const $fieldK = ${++n};",
+        "/// Returns the URI **path segment** at position `$n` AKA the value",
+        "/// corresponding to the key `$n` or [$fieldK].",
+        "String? get $fieldName => super.arguments<String>($fieldK)?.nullIfEmpty();",
+      ].join("\n");
+    }).toList()
+      ..sort();
+
+    final queryParameters =
+        annotation.read("queryParameters").setValue.map((final v) => v.toStringValue()!);
+
+    final queryParametersA = queryParameters.map((final l) {
+      final fieldName = l;
+      return "String? $fieldName,";
+    }).toList()
+      ..sort();
+
+    final queryParametersB = queryParameters.map((final l) {
+      final fieldName = l;
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
+      return "if ($fieldName != null) $fieldK: $fieldName,";
+    }).toList()
+      ..sort();
+
+    final queryParametersC = queryParameters.map((final l) {
+      final fieldName = l;
+      final fieldKey = fieldName.toSnakeCase();
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
+      return [
+        "/// Key corresponding to the value `$fieldName`",
+        "static const $fieldK = \"$fieldKey\";",
+        "/// Returns the URI **query parameter** with the key `$fieldKey`",
+        "/// or [$fieldK].",
+        "String? get $fieldName => super.arguments<String>($fieldK);",
+      ].join("\n");
+    }).toList()
+      ..sort();
+
+    final internalParameters = annotation
+        .read("internalParameters")
         .mapValue
         .map((final k, final v) => MapEntry(k!.toStringValue(), v!.toStringValue()))
         .cast<String, String>()
         .entries;
 
-    // Prepare member variables.
-    final insertMemberVariables = configuration.map((final l) {
+    final internalParametersA = internalParameters.map((final l) {
       final fieldName = l.key;
       final fieldType = l.value;
-      return "final $fieldType $fieldName;";
+      final required = fieldType.endsWith("?") ? "" : "required ";
+      return "$required$fieldType $fieldName,";
     }).toList()
       ..sort();
 
-    // Prepare constructor parameters.
-    final insertConstructorParameters = configuration.map((final l) {
+    final internalParametersB = internalParameters.map((final l) {
       final fieldName = l.key;
-      //final fieldType = l.value;
-      return "required this.$fieldName,";
+      final fieldType = l.value;
+      final ifNotNull = fieldType.endsWith("?") ? "if ($fieldName != null) " : "";
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
+      return "$ifNotNull $fieldK: $fieldName,";
+    }).toList()
+      ..sort();
+
+    final internalParametersC = internalParameters.map((final l) {
+      final fieldName = l.key;
+      final fieldType = l.value;
+      final fieldKey = fieldName.toSnakeCase();
+      final nullable = fieldType.endsWith("?");
+      final nullCheck = nullable ? "" : "!";
+      final t = nullable ? fieldType.substring(0, fieldType.length - 1) : fieldType;
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
+      return [
+        "/// Key corresponding to the value `$fieldName`",
+        "static const $fieldK = \"$fieldKey\";",
+        "/// Returns the **internal parameter** with the key `$fieldKey`",
+        "/// or [$fieldK].",
+        "$fieldType get $fieldName => super.arguments<$t>($fieldK)$nullCheck;",
+      ].join("\n");
     }).toList()
       ..sort();
 
@@ -85,6 +164,9 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_$constNameScreen = [${isOnlyAccessibleIfSignedIn ? "_LOCATION" : ""}];
         const LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_OUT_$constNameScreen = [${isOnlyAccessibleIfSignedOut ? "_LOCATION" : ""}];
         
+        final cast$nameScreenConfigurationClass = Map<Type, MyRouteConfiguration Function(MyRouteConfiguration)>.unmodifiable({
+          $nameScreenConfigurationClass: (MyRouteConfiguration a) => $nameScreenConfigurationClass.from(a)
+        });
 
         T? _tr<T>(String key, [Map<dynamic, dynamic> args = const {}]) => "\$_L.\$key".toLowerCase().tr<T>(args);
         
@@ -99,7 +181,14 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
               ($isOnlyAccessibleIfSignedOut && !isSignedOut)) {
                 return null;
           }
-          if (/* configuration is ${nameScreenClass}Configuration || */ RegExp(r"^(\" + _LOCATION + r")([\?\/].*)?\$").hasMatch(configuration.uri.toString())) {
+          if (/* configuration is ${nameScreenClass}Configuration || */
+            RegExp(
+                r"^(\" + _LOCATION + r")([\?\/].*)?\$",
+              ).hasMatch(
+                Uri.decodeComponent(
+                  configuration.uri.toString(),
+                ),
+              )) {
             return $nameScreenClass(configuration);
           }
           return null;
@@ -114,17 +203,58 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
           static const LOCATION = _LOCATION;
           static const L = _L;
           static const NAME_SCREEN_CLASS = _NAME_SCREEN_CLASS;
-          ${insertMemberVariables.join("\n")}
 
           //
           //
           //
+
+          $nameScreenConfigurationClass.from(MyRouteConfiguration from)
+            : super.fromUri(from.uri, key: from.key, internalParameters: from.internalParameters);
+
+          //
+          //
+          //
+          
+
           $nameScreenConfigurationClass({
             String? key,
-            ${insertConstructorParameters.join("\n")}
-            Map<String, String>? queryArguments,
-          }) : super(_LOCATION, key: key, queryArguments: queryArguments);
+            ${pathSegmentsA.join("\n")}
+            ${queryParametersA.join("\n")}
+            ${internalParametersA.join("\n")}
+          }) : super(
+                  _LOCATION,
+                  key: key,
+                  pathSegments: [
+                    ${pathSegmentsB.join("\n")}
+                  ],
+                  queryParameters: {
+                    ${queryParametersB.join("\n")}
+                  },
+                  internalParameters: {
+                    ${internalParametersB.join("\n")}
+                  },
+                );
 
+          //
+          //
+          //
+
+          ${pathSegmentsC.join("\n")}
+          ${queryParametersC.join("\n")}
+          ${internalParametersC.join("\n")}
+
+          //
+          //
+          //
+
+          @override
+          MyRouteConfiguration cast() {
+            return MyRouteConfiguration.fromUri(
+              this.uri,
+              key: this.key,
+              internalParameters: this.internalParameters,
+            );
+          }
         }
         """,
       ],

@@ -105,7 +105,8 @@ class BuilderGenerateExportsScreens implements Builder {
         linesAccessibleIfSignedIn = <String>[],
         linesAccessibleIfSignedOut = <String>[],
         linesScreenTypes = <String>[],
-        linesScreenMetadata = <String>[];
+        linesScreenMetadata = <String>[],
+        linesConfigurationCasts = <String>[];
     final paths = await buildStep
         .findAssets(Glob("lib/screens/**"))
         .map((final l) => l.path.replaceFirst("lib/screens/", ""))
@@ -126,20 +127,23 @@ class BuilderGenerateExportsScreens implements Builder {
       final nameClass =
           RegExp(r"\/((screen_)(.+))\.dart").firstMatch(path)?.group(1)?.toCamelCaseCapitalized();
       if (nameClass != null) {
-        final constNameScreen_ = nameClass.substring("Screen".length).toSnakeCase().toUpperCase();
-        final constNameLocation_ = "/${constNameScreen_.toLowerCase()}";
+        final constNameScreen = nameClass.substring("Screen".length).toSnakeCase().toUpperCase();
+        final constNameLocation_ = "/${constNameScreen.toLowerCase()}";
         linesScreenMakers //
             .add("maker${nameClass},");
+        linesConfigurationCasts.add(
+          "...cast${nameClass}Configuration,",
+        );
         linesCannotRequest //
-            .add("...LOCATION_NOT_REDIRECTABLE_$constNameScreen_,");
+            .add("...LOCATION_NOT_REDIRECTABLE_$constNameScreen,");
         linesAccessible //
-            .add("...LOCATION_ACCESSIBLE_$constNameScreen_,");
+            .add("...LOCATION_ACCESSIBLE_$constNameScreen,");
         linesAccessibleIfVerified //
-            .add("...LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_AND_VERIFIED_$constNameScreen_,");
+            .add("...LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_AND_VERIFIED_$constNameScreen,");
         linesAccessibleIfSignedIn //
-            .add("...LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_$constNameScreen_,");
+            .add("...LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_IN_$constNameScreen,");
         linesAccessibleIfSignedOut //
-            .add("...LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_OUT_$constNameScreen_,");
+            .add("...LOCATION_ACCESSIBLE_ONLY_IF_SIGNED_OUT_$constNameScreen,");
         linesScreenTypes.add("\"$constNameLocation_\": $nameClass,");
         linesScreenMetadata.add("$nameClass: null,");
       }
@@ -154,7 +158,9 @@ class BuilderGenerateExportsScreens implements Builder {
         "\n\nconst LOCATIONS_ACCESSIBLE = [\n  ${linesAccessible.join("\n  ")}\n];" +
         "\n\nconst LOCATIONS_ACCESSIBLE_ONLY_IF_SIGNED_IN_AND_VERIFIED = [\n  ${linesAccessibleIfVerified.join("\n  ")}\n];" +
         "\n\nconst LOCATIONS_ACCESSIBLE_ONLY_IF_SIGNED_IN = [\n  ${linesAccessibleIfSignedIn.join("\n  ")}\n];" +
-        "\n\nconst LOCATIONS_ACCESSIBLE_ONLY_IF_SIGNED_OUT = [\n  ${linesAccessibleIfSignedOut.join("\n  ")}\n];";
+        "\n\nconst LOCATIONS_ACCESSIBLE_ONLY_IF_SIGNED_OUT = [\n  ${linesAccessibleIfSignedOut.join("\n  ")}\n];" +
+        "\n\nfinal configurationCasts = Map<Type, MyRouteConfiguration Function(MyRouteConfiguration)>.unmodifiable({\n  ${linesConfigurationCasts.join("\n  ")}\n});";
+    ;
     final id = AssetId(
       buildStep.inputId.package,
       path.join("lib", "screens", "all_screens.dart"),

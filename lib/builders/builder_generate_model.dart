@@ -57,10 +57,11 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
       final fieldName = l.key;
       final fieldKey = fieldName.toSnakeCase();
       final fieldType = typeSourceRemoveOptions(l.value);
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
       return [
-        "/// Variable: \"$fieldName\"",
-        "static const k${fieldName.capitalize()} = \"$fieldKey\";",
-        "/// Key: \"$fieldKey\"",
+        "/// Key corresponding to the value `$fieldName`.",
+        "static const $fieldK = \"$fieldKey\";",
+        "/// Value corresponding to the key `$fieldKey` or [$fieldK].",
         "$fieldType $fieldName;",
       ].join("\n");
     }).toList()
@@ -78,10 +79,10 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     // Prepare fromJson.
     final insertFromJson = paramsWithId.map((final l) {
       final fieldName = l.key;
-      final fieldNameSnakeCase = fieldName.toSnakeCase();
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
       final fieldTypeSource = l.value;
       //final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
-      final p = "json[\"$fieldNameSnakeCase\"]";
+      final p = "json[$fieldK]";
       final compiled = TypeSourceMapper.withDefaultFromMappers(modelFromMappers)
           .compile(fieldTypeSource, p)
           .replaceFirst(
@@ -97,7 +98,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     // Prepare toJson.
     final insertToJson = paramsWithId.map((final l) {
       final fieldName = l.key;
-      final fieldNameSnakeCase = fieldName.toSnakeCase();
+      final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
       final fieldTypeSource = l.value;
       final fieldType = typeSourceRemoveOptions(fieldTypeSource);
       final p = fieldName;
@@ -110,7 +111,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               ...modelToMappers,
             }),
           );
-      return "\"$fieldNameSnakeCase\": $compiled,";
+      return "$fieldK: $compiled,";
     }).toList()
       ..sort();
 
@@ -137,6 +138,8 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
 
+          /// Related member: `this.id`;
+          static const K_ID = "id";
           ${insertMemberVariables.join("\n")}
 
           //
@@ -151,7 +154,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             super.id = id;
           }
 
-          /// Converts a JSON object to a $nameClass object.
+          /// Converts a [Json] object to a [$nameClass] object.
           factory $nameClass.fromJson(Json json) {
             try {
               return $nameClass(${insertFromJson.join("\n")});
@@ -168,7 +171,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             return ($nameClass()..updateWith(other)) as T;
           }
 
-          /// Converts a $nameClass object to a JSON object.
+          /// Converts a [$nameClass] object to a [Json] object.
           @override
           Json toJson() {
             try {
