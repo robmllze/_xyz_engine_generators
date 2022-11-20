@@ -99,7 +99,7 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
               ($isOnlyAccessibleIfSignedOut && !isSignedOut)) {
                 return null;
           }
-          if (configuration is ${nameScreenClass}Configuration || RegExp(r"^(\" + _LOCATION + r")([\?\/].*)?\$").hasMatch(configuration.uri.toString())) {
+          if (/* configuration is ${nameScreenClass}Configuration || */ RegExp(r"^(\" + _LOCATION + r")([\?\/].*)?\$").hasMatch(configuration.uri.toString())) {
             return $nameScreenClass(configuration);
           }
           return null;
