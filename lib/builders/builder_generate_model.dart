@@ -248,16 +248,16 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           /// Completes [SKELETON_PATH] by replacing the handlebars with the
           /// fields in [json].
-          static String _completePath(String? pathOverride, Json json) {
-            return (pathOverride ?? SKELETON_PATH).replaceHandlebars(json, "{", "}");
+          static String _completePath(String? skeletonPathOverride, Json json) {
+            return (skeletonPathOverride ?? SKELETON_PATH).replaceHandlebars(json, "{", "}");
           }
 
           /// Returns a reference to this model on the server at [SKELETON_PATH] or at
-          /// [pathOverride] if provided.
+          /// [skeletonPathOverride] if provided.
           @override
-          DocumentReference<Json> refServer([String? pathOverride]) {
+          DocumentReference<Json> refServer([String? skeletonPathOverride]) {
             return G.fbFirestore.documentReference(
-              _completePath(pathOverride, this.toJson()),
+              _completePath(skeletonPathOverride, this.toJson()),
             );
           }
 
@@ -265,32 +265,32 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
         static Future<void> Function(
             $nameClass model, {
             bool merge,
-            String? pathOverride,
+            String? skeletonPathOverride,
           }) toServerOverride = (
               final model, {
               final merge = true,
-              final pathOverride,
+              final skeletonPathOverride,
             }) async {
             final json = model.toJson();
-            final path = _completePath(pathOverride, json);
+            final path = _completePath(skeletonPathOverride, json);
             await G.fbFirestore.documentReference(path).set(
                   json,
                   SetOptions(merge: merge),
                 );
           };
           
-          /// Writes this model to the server at [SKELETON_PATH] or at [pathOverride]
-          /// if provided.
+          /// Writes this model to the server at [SKELETON_PATH] or at
+          /// [skeletonPathOverride] if provided.
           @override
           Future<void> toServer({
             bool merge = true,
-            String? pathOverride,
+            String? skeletonPathOverride,
           }) async {
             try {
               await toServerOverride(
                 this,
                 merge: merge,
-                pathOverride: pathOverride,
+                skeletonPathOverride: skeletonPathOverride,
               );
             } catch (e) {
               throw Exception(
@@ -298,20 +298,25 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               );
             }
           }
-
-          /// Returns the model identified by [id] from the server at [SKELETON_PATH]
-          /// or at [pathOverride] if provided. Redefine this function to override
-          /// its behavior.
+          /// Fetches a model from the server.
+          /// 
+          /// Example:
+          /// 
+          /// If [SKELETON_PATH] (or `skeletonPathOverride`) = "{collection}/{id}", and
+          /// `pathParameters` = {"collection": "foo", "id": "bar"}, then the model's
+          /// document path is "foo/bar".
+          /// 
+          /// NB: Redefine this function to override its behavior.
           static Future<$nameClass?> Function(
-            String id, {
-            String? pathOverride,
+            Json pathParameters, {
+            String? skeletonPathOverride,
           }) fromServer = (
-            String id, {
-            String? pathOverride,
+            Json pathParameters, {
+            String? skeletonPathOverride,
           }) async {
             try {
               final ref = G.fbFirestore.documentReference(
-                _completePath(pathOverride, {"id": id}),
+                _completePath(skeletonPathOverride, pathParameters),
               );
               final json = (await ref.get()).data();
               return json != null ? $nameClass.fromJson(json) : null;
@@ -325,17 +330,17 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// Redefine this function to override [deleteFromServer].
           static Future<void> Function(
             $nameClass model, {
-              String? pathOverride
-            }) deleteFromServerOverride = (final model, {final pathOverride}) async {
-            await model.refServer(pathOverride).delete();
+              String? skeletonPathOverride
+            }) deleteFromServerOverride = (final model, {final skeletonPathOverride}) async {
+            await model.refServer(skeletonPathOverride).delete();
           };
           
           /// Deletes this model from the server at [SKELETON_PATH] or at
-          /// [pathOverride] if provided.
+          /// [skeletonPathOverride] if provided.
           @override
-          Future<void> deleteFromServer({String? pathOverride}) async {
+          Future<void> deleteFromServer({String? skeletonPathOverride}) async {
             try {
-              await deleteFromServerOverride(this, pathOverride: pathOverride);
+              await deleteFromServerOverride(this, skeletonPathOverride: skeletonPathOverride);
             } catch (e) {
               throw Exception(
                 "[$nameClass.deleteFromServer] Failed to delete model from server due to \$e",
