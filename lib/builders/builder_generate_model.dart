@@ -225,10 +225,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           @override
           bool operator ==(Object other) {
-            if (other is $nameClass) {
-              return const DeepCollectionEquality().equals(this.toJson(), other.toJson());
-            }
-            return false;
+            return other is $nameClass ? const DeepCollectionEquality().equals(this.toJson(), other.toJson()): false;
           }
 
           @override
@@ -330,7 +327,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// Redefine this function to override [deleteFromServer].
           static Future<void> Function(
             $nameClass model, {
-              String? skeletonPathOverride
+              String? skeletonPathOverride,
             }) deleteFromServerOverride = (final model, {final skeletonPathOverride}) async {
             await model.refServer(skeletonPathOverride).delete();
           };
@@ -340,7 +337,10 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           Future<void> deleteFromServer({String? skeletonPathOverride}) async {
             try {
-              await deleteFromServerOverride(this, skeletonPathOverride: skeletonPathOverride);
+              await deleteFromServerOverride(
+                this,
+                skeletonPathOverride: skeletonPathOverride,
+              );
             } catch (e) {
               throw Exception(
                 "[$nameClass.deleteFromServer] Failed to delete model from server due to \$e",

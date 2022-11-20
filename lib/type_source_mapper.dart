@@ -274,9 +274,18 @@ final defaultToMappers = TMappers.unmodifiable({
     return "${e.p}?.map((${e.args}) => ${e.hashes},).nullsRemoved().nullIfEmpty()?.toList()";
   },
   //
-  r"^(dynamic|bool|num|int|double|Timestamp)\??$": (e) {
+  r"^(dynamic|bool|num|int|double)\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "${e.p}";
+  },
+  //
+  r"^Timestamp$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}.microsecondsSinceEpoch";
+  },
+  r"^Timestamp\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}?.microsecondsSinceEpoch";
   },
   //
   r"^Duration$": (e) {
@@ -306,13 +315,22 @@ final defaultToMappers = TMappers.unmodifiable({
     return "${e.p}?.toString().nullIfEmpty()";
   },
   //
+  // r"^DateTime$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "${e.p}.toUtc().toIso8601String()";
+  // },
+  // r"^DateTime\?$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "${e.p}?.toUtc().toIso8601String()";
+  // },
+  //
   r"^DateTime$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}.toUtc().toIso8601String()";
+    return "Timestamp.fromDate(${e.p})";
   },
   r"^DateTime\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}?.toUtc().toIso8601String()";
+    return "(){ final a = ${e.p}; return a != null ? Timestamp.fromDate(a): null; }()";
   },
 });
 
@@ -433,15 +451,15 @@ final defaultFromMappers = TMappers.unmodifiable({
   //
   r"^Timestamp$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "(${e.p} as Timestamp)";
+    return "Timestamp.fromMicrosecondsSinceEpoch(${e.p} as int)";
   },
   r"^Timestamp\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "letAs<Timestamp>(${e.p})";
+    return "() { final a = letAs<int>(${e.p}); return a != null ?  Timestamp.fromMicrosecondsSinceEpoch(a): null; }()";
   },
   r"^Timestamp\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "letTimestamp(${e.p})";
+    return "() { final a = letInt(${e.p}); return a != null ? Timestamp.fromMicrosecondsSinceEpoch(a): null; }()";
   },
   //
   r"^double$": (e) {
@@ -479,16 +497,29 @@ final defaultFromMappers = TMappers.unmodifiable({
     return "Uri.tryParse(${e.p}.toString())";
   },
   //
+  // r"^DateTime$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "DateTime.parse(${e.p}.toString())";
+  // },
+  // r"^DateTime\?$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "DateTime.tryParse(${e.p}.toString())";
+  // },
+  // r"^DateTime\|let\??$": (e) {
+  //   if (e is! MapperSubEvent) throw TypeError();
+  //   return "letDateTime(${e.p})";
+  // },
+  //
   r"^DateTime$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "DateTime.parse(${e.p}.toString())";
+    return "(${e.p} as Timestamp).toDate()";
   },
   r"^DateTime\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "DateTime.tryParse(${e.p}.toString())";
+    return "(${e.p} as Timestamp?)?.toDate()";
   },
   r"^DateTime\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "letDateTime(${e.p})";
+    return "letTimestamp(${e.p})?.toDate()";
   },
 });
