@@ -168,8 +168,8 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             return ($nameClass()..updateWith(other)) as T;
           }
 
-          @override
           /// Converts a $nameClass object to a JSON object.
+          @override
           Json toJson() {
             try {
               return mapToJson(
@@ -177,6 +177,8 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
                   ${insertToJson.join("\n")}
                 }..removeWhere((_, final l) => l == null),
                 typesAllowed: {Timestamp},
+                // Defined in utils/timestamp.dart
+                keyConverter: timestampKeyConverter,
               );
             } catch (e) {
               throw Exception(
