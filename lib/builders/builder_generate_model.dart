@@ -275,27 +275,34 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             $nameClass model, {
             bool merge,
             String? serverPathSkeleton,
+            Map<String, dynamic>? writeAlso,
             Map<Symbol, dynamic>? options,
           }) toServerOverride = (
               final model, {
               final merge = true,
               final serverPathSkeleton,
+              final writeAlso,
               final options,
             }) async {
             final json = model.toJson();
             final serverPath = _completeServerPath(serverPathSkeleton, json);
             await G.fbFirestore.documentReference(serverPath).set(
-                  json,
+                  {
+                    ...json,
+                    if (writeAlso != null) ...writeAlso,
+                  },
                   SetOptions(merge: merge),
                 );
           };
-          
-          /// Writes this model to the server at [SERVER_PATH_SKELETON] or at
-          /// [serverPathSkeleton] if provided, with the given [options].
+
+          /// Writes this model and the fields [writeAlso] to the server at
+          /// [SERVER_PATH_SKELETON] or at [serverPathSkeleton] if provided, with the
+          /// given [options].
           @override
           Future<void> toServer({
             bool merge = true,
             String? serverPathSkeleton,
+            Map<String, dynamic>? writeAlso,
             Map<Symbol, dynamic>? options,
           }) async {
             try {
@@ -303,11 +310,12 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
                 this,
                 merge: merge,
                 serverPathSkeleton: serverPathSkeleton,
+                writeAlso: writeAlso,
                 options: options,
               );
             } catch (e) {
               throw Exception(
-                "[$nameClass.toServer] Failed to write model to server due to \$e",
+                "[$nameClass.toServer] Failed to write model to server: \$e",
               );
             }
           }
@@ -336,7 +344,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               return json != null ? $nameClass.fromJson(json) : null;
             } catch (e) {
               throw Exception(
-                "[$nameClass.fromServer] Failed to read model from server due to \$e",
+                "[$nameClass.fromServer] Failed to read model from server: \$e",
               );
             }
           };
@@ -366,7 +374,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               );
             } catch (e) {
               throw Exception(
-                "[$nameClass.deleteFromServer] Failed to delete model from server due to \$e",
+                "[$nameClass.deleteFromServer] Failed to delete model from server: \$e",
               );
             }
           }
