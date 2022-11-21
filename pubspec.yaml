@@ -6,7 +6,7 @@
 
 name: _xyz_engine_generators
 description: Supplementary code generation for the xyz_engine package
-version: 0.1.12
+version: 0.2.0
 publish_to: none
 environment:
   sdk: '>=2.18.2 <3.0.0'

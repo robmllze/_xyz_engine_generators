@@ -31,7 +31,8 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     ConstantReader annotation,
     BuildStep buildStep,
   ) {
-    // Input.
+    // [1] Read the input for the generator.
+
     final visitor = ModelVisitor();
     element.visitChildren(visitor);
     final buffer = StringBuffer();
@@ -52,12 +53,13 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     final paramsWithoutId = params.toList()..removeWhere((final l) => l.key == "id");
     final paramsWithId = List.of(paramsWithoutId)..add(MapEntry("id", "String?"));
 
-    // Prepare member variables.
-    final insertMemberVariables = paramsWithoutId.map((final l) {
+    // [2] Prepare member variables.
+
+    final insert2 = paramsWithoutId.map((final l) {
       final fieldName = l.key;
       final fieldKey = fieldName.toSnakeCase();
-      final fieldType = typeSourceRemoveOptions(l.value);
       final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
+      final fieldType = typeSourceRemoveOptions(l.value);
       return [
         "/// Key corresponding to the value `$fieldName`.",
         "static const $fieldK = \"$fieldKey\";",
@@ -67,21 +69,20 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     }).toList()
       ..sort();
 
-    // Prepare constructor parameters.
-    final insertConstructorParameters = paramsWithoutId.map((final l) {
-      //final isNullable = typeSourceRemoveOptions(l.value).endsWith("?");
+    // [3] Prepare constructor parameters.
+
+    final insert3 = paramsWithoutId.map((final l) {
       final fieldName = l.key;
       return "this.$fieldName,";
-      //return "${isNullable ? "" : "required "}this.$fieldName,";
     }).toList()
       ..sort();
 
-    // Prepare fromJson.
-    final insertFromJson = paramsWithId.map((final l) {
+    // [4] Prepare fromJson.
+
+    final insert4 = paramsWithId.map((final l) {
       final fieldName = l.key;
       final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
       final fieldTypeSource = l.value;
-      //final fieldType = typeSourceRemoveCleaned(fieldTypeSource);
       final p = "json[$fieldK]";
       final compiled = TypeSourceMapper.withDefaultFromMappers(modelFromMappers)
           .compile(fieldTypeSource, p)
@@ -95,8 +96,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     }).toList()
       ..sort();
 
-    // Prepare toJson.
-    final insertToJson = paramsWithId.map((final l) {
+    // [5] Prepare toJson.
+
+    final insert5 = paramsWithId.map((final l) {
       final fieldName = l.key;
       final fieldK = "K_${fieldName.toSnakeCase().toUpperCase()}";
       final fieldTypeSource = l.value;
@@ -115,21 +117,24 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     }).toList()
       ..sort();
 
-    // Prepare newOverride.
-    final insertNewWith = paramsWithId.map((final l) {
+    // [6] Prepare newOverride.
+
+    final insert6 = paramsWithId.map((final l) {
       final fieldName = l.key;
       return "$fieldName: other.$fieldName ?? this.$fieldName,";
     }).toList()
       ..sort();
 
-    // Prepare updateWith.
-    final insertUpdateWith = paramsWithId.map((final l) {
+    // [7] Prepare updateWith.
+
+    final insert7 = paramsWithId.map((final l) {
       final fieldName = l.key;
       return "if (other.$fieldName != null) { this.$fieldName = other.$fieldName; }";
     }).toList()
       ..sort();
 
-    // Output.
+    // [8] Write the output for the generator.
+
     buffer.writeAll(
       [
         """
@@ -140,7 +145,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
 
           /// Related member: `this.id`;
           static const K_ID = "id";
-          ${insertMemberVariables.join("\n")}
+          ${insert2.join("\n")}
 
           //
           //
@@ -149,7 +154,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// Constructs a new instance of [$nameClass] identified by [id].
           $nameClass({
             String? id,
-            ${insertConstructorParameters.join("\n")}
+            ${insert3.join("\n")}
           }) {
             super.id = id;
           }
@@ -157,7 +162,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           /// Converts a [Json] object to a [$nameClass] object.
           factory $nameClass.fromJson(Json json) {
             try {
-              return $nameClass(${insertFromJson.join("\n")});
+              return $nameClass(${insert4.join("\n")});
             } catch (e) {
                throw Exception(
                 "[$nameClass.fromJson] Failed to convert JSON to $nameClass due to: \$e",
@@ -177,7 +182,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             try {
               return mapToJson(
                 {
-                  ${insertToJson.join("\n")}
+                  ${insert5.join("\n")}
                 }..removeWhere((_, final l) => l == null),
                 typesAllowed: {Timestamp},
                 // Defined in utils/timestamp.dart
@@ -195,7 +200,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           T newOverride<T extends GeneratedModel>(T other) {
             if (other is $nameClass) {
-              return $nameClass(${insertNewWith.join("\n")}) as T;
+              return $nameClass(${insert6.join("\n")}) as T;
             }
             throw Exception(
               "[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
@@ -218,7 +223,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           void updateWith<T extends GeneratedModel>(T other) {
             if (other is $nameClass) {
-              ${insertUpdateWith.join("\n")}
+              ${insert7.join("\n")}
               return;
             }
             throw Exception(
@@ -237,6 +242,9 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           @override
           String toString() => this.toJson().toString();
         """,
+
+        // [9] Write server utils if needed.
+
         if (path.isNotEmpty) ...[
           """
           // ---------------------------------------------------------------------------
@@ -262,14 +270,17 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           }
 
         /// Redefine this function to override [toServer].
+        /// Pass arbitrary options via [options].
         static Future<void> Function(
             $nameClass model, {
             bool merge,
             String? skeletonPathOverride,
+            Map<Symbol, dynamic>? options,
           }) toServerOverride = (
               final model, {
               final merge = true,
               final skeletonPathOverride,
+              final options,
             }) async {
             final json = model.toJson();
             final path = _completePath(skeletonPathOverride, json);
@@ -280,17 +291,19 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           };
           
           /// Writes this model to the server at [SKELETON_PATH] or at
-          /// [skeletonPathOverride] if provided.
+          /// [skeletonPathOverride] if provided, with the given [options].
           @override
           Future<void> toServer({
             bool merge = true,
             String? skeletonPathOverride,
+            Map<Symbol, dynamic>? options,
           }) async {
             try {
               await toServerOverride(
                 this,
                 merge: merge,
                 skeletonPathOverride: skeletonPathOverride,
+                options: options,
               );
             } catch (e) {
               throw Exception(
@@ -298,7 +311,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               );
             }
           }
-          /// Fetches a model from the server.
+          /// Fetches a model from the server with the given [options].
           /// 
           /// Example:
           /// 
@@ -313,6 +326,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           }) fromServer = (
             Json pathParameters, {
             String? skeletonPathOverride,
+            Map<Symbol, dynamic>? options,
           }) async {
             try {
               final ref = G.fbFirestore.documentReference(
@@ -328,15 +342,21 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           };
 
           /// Redefine this function to override [deleteFromServer].
+          /// Pass arbitrary options via [options].
           static Future<void> Function(
             $nameClass model, {
               String? skeletonPathOverride,
-            }) deleteFromServerOverride = (final model, {final skeletonPathOverride}) async {
+              Map<Symbol, dynamic>? options,
+            }) deleteFromServerOverride = (
+              final model, {
+              final skeletonPathOverride,
+              final options,
+            }) async {
             await model.refServer(skeletonPathOverride).delete();
           };
           
           /// Deletes this model from the server at [SKELETON_PATH] or at
-          /// [skeletonPathOverride] if provided.
+          /// [skeletonPathOverride] if provided, with the given [options].
           @override
           Future<void> deleteFromServer({String? skeletonPathOverride}) async {
             try {
