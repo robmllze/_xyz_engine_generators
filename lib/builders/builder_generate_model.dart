@@ -184,7 +184,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
                 {
                   ${insert5.join("\n")}
                 }..removeWhere((_, final l) => l == null),
-                typesAllowed: {Timestamp},
+                typesAllowed: {Timestamp, FieldValue},
                 // Defined in utils/timestamp.dart
                 keyConverter: timestampKeyConverter,
               );
