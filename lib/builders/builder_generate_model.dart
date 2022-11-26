@@ -286,7 +286,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
             }) async {
             final json = model.toJson();
             final serverPath = _completeServerPath(serverPathSkeleton, json);
-            await G.fbFirestore.documentReference(serverPath).set(
+            await G.fbFirestore.documentReference(serverPath).setSafe(
                   {
                     ...json,
                     if (writeAlso != null) ...writeAlso,
@@ -340,7 +340,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               final ref = G.fbFirestore.documentReference(
                 _completeServerPath(serverPathSkeleton, pathParameters),
               );
-              final json = (await ref.get()).data();
+              final json = (await ref.getSafe()).data();
               return json != null ? $nameClass.fromJson(json) : null;
             } catch (e) {
               throw Exception(
@@ -360,7 +360,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               final serverPathSkeleton,
               final options,
             }) async {
-            await model.refServer(serverPathSkeleton).delete();
+            await model.refServer(serverPathSkeleton).deleteSafe();
           };
           
           /// Deletes this model from the server at [SERVER_PATH_SKELETON] or at
