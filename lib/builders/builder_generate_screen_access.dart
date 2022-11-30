@@ -46,7 +46,8 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
     final nameScreenClass = visitor.nameClass.toString();
     final nameScreenConfigurationClass = "${nameScreenClass}Configuration";
     final constNameScreen = nameScreenClass.substring("Screen".length).toSnakeCase().toUpperCase();
-    final location = "/${nameScreenClass.toSnakeCase().substring("screen_".length)}";
+    final segment = nameScreenClass.toSnakeCase().substring("screen_".length);
+    //final location = "/$segment";
     final internalParameters = annotation
         .read("internalParameters")
         .mapValue
@@ -155,7 +156,8 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         // **************************************************************************
 
         const _L = "screens.$nameScreenClass";
-        const _LOCATION = "$location";
+        const _SEGMENT = "$segment";
+        const _LOCATION = "/\$_SEGMENT";
         const _NAME_SCREEN_CLASS = "$nameScreenClass";
 
         T? _tr<T>(String key, [Map<dynamic, dynamic> args = const {}]) => "\$_L.\$key".toLowerCase().tr<T>(args);
@@ -274,6 +276,7 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         if (pathSegmentsC.isNotEmpty)
           """
           pathSegments: [
+            _SEGMENT,
             ${pathSegmentsC.join("\n")}
           ],
           """,

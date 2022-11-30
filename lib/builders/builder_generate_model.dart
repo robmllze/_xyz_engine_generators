@@ -36,8 +36,11 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     final visitor = ModelVisitor();
     element.visitChildren(visitor);
     final buffer = StringBuffer();
-    final nameClass = visitor.nameClass?.replaceFirst("_", "");
-    final serverPathSkeleton = annotation.read("serverPathSkeleton").stringValue;
+    final nameSuperClass = visitor.nameClass;
+    var nameChildClass = nameSuperClass?.replaceFirst("_", "").replaceFirst("Utils", "");
+    if (nameChildClass == nameSuperClass) {
+      nameChildClass = "Generated$nameChildClass";
+    }
     final params = annotation
         .read("parameters")
         .mapValue
@@ -138,7 +141,7 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
     buffer.writeAll(
       [
         """
-        class $nameClass extends GeneratedModel {
+        class $nameChildClass extends $nameSuperClass {
           //
           //
           //
@@ -151,32 +154,32 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
           //
           //
           
-          /// Constructs a new instance of [$nameClass] identified by [id].
-          $nameClass({
+          /// Constructs a new instance of [$nameChildClass] identified by [id].
+          $nameChildClass({
             String? id,
             ${insert3.join("\n")}
-          }) {
+          }): super._() {
             super.id = id;
           }
 
-          /// Converts a [Json] object to a [$nameClass] object.
-          factory $nameClass.fromJson(Json json) {
+          /// Converts a [Json] object to a [$nameChildClass] object.
+          factory $nameChildClass.fromJson(Json json) {
             try {
-              return $nameClass(${insert4.join("\n")});
+              return $nameChildClass(${insert4.join("\n")});
             } catch (e) {
                throw Exception(
-                "[$nameClass.fromJson] Failed to convert JSON to $nameClass due to: \$e",
+                "[$nameChildClass.fromJson] Failed to convert JSON to $nameChildClass due to: \$e",
                 );
             }
           }
 
           /// Returns a copy of `this` model.
           @override
-          T copy<T extends GeneratedModel>(T other) {
-            return ($nameClass()..updateWith(other)) as T;
+          T copy<T extends XyzModel>(T other) {
+            return ($nameChildClass()..updateWith(other)) as T;
           }
 
-          /// Converts a [$nameClass] object to a [Json] object.
+          /// Converts a [$nameChildClass] object to a [Json] object.
           @override
           Json toJson() {
             try {
@@ -190,197 +193,59 @@ class GeneratorModel extends GeneratorForAnnotation<GenerateModel> {
               );
             } catch (e) {
               throw Exception(
-                "[$nameClass.toJson] Failed to convert $nameClass to JSON due to: \$e",
+                "[$nameChildClass.toJson] Failed to convert $nameChildClass to JSON due to: \$e",
                 );
             }
           }
           
           /// Returns a copy of `this` object with the fields in [other] overriding
-          /// `this` fields. NB: [other] must be of type $nameClass.
+          /// `this` fields. NB: [other] must be of type $nameChildClass.
           @override
-          T newOverride<T extends GeneratedModel>(T other) {
-            if (other is $nameClass) {
-              return $nameClass(${insert6.join("\n")}) as T;
+          T newOverride<T extends XyzModel>(T other) {
+            if (other is $nameChildClass) {
+              return $nameChildClass(${insert6.join("\n")}) as T;
             }
             throw Exception(
-              "[$nameClass.newOverride] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
+              "[$nameChildClass.newOverride] Expected 'other' to be of type $nameChildClass and not \${other.runtimeType}",
               );
           }
           
-          /// Returns a new empty instance of [$nameClass].
+          /// Returns a new empty instance of [$nameChildClass].
           @override
-          T newEmpty<T extends GeneratedModel>() {
-            return $nameClass() as T;
+          T newEmpty<T extends XyzModel>() {
+            return $nameChildClass() as T;
           }
           
           /// Updates `this` fields from the fields of [other].
           @override
           void updateWithJson(Json other) {
-            this.updateWith($nameClass.fromJson(other));
+            this.updateWith($nameChildClass.fromJson(other));
           }
           
           /// Updates `this` fields from the fields of [other].
           @override
-          void updateWith<T extends GeneratedModel>(T other) {
-            if (other is $nameClass) {
+          void updateWith<T extends XyzModel>(T other) {
+            if (other is $nameChildClass) {
               ${insert7.join("\n")}
               return;
             }
             throw Exception(
-              "[$nameClass.updateWith] Expected 'other' to be of type $nameClass and not \${other.runtimeType}",
+              "[$nameChildClass.updateWith] Expected 'other' to be of type $nameChildClass and not \${other.runtimeType}",
               );
           }
 
           @override
           bool operator ==(Object other) {
-            return other is $nameClass ? const DeepCollectionEquality().equals(this.toJson(), other.toJson()): false;
+            return other is $nameChildClass ? const DeepCollectionEquality().equals(this.toJson(), other.toJson()): false;
           }
 
           @override
-          int get hashCode => this.toJson().hashCode;
+          int get hashCode => this.toString().hashCode;
 
           @override
           String toString() => this.toJson().toString();
+        }
         """,
-
-        // [9] Write server utils if needed.
-
-        if (serverPathSkeleton.isNotEmpty) ...[
-          """
-          // ---------------------------------------------------------------------------
-          // SERVER UTILS
-          // ---------------------------------------------------------------------------
-
-          /// Incomplete path to the model on the server.
-          static const SERVER_PATH_SKELETON = "$serverPathSkeleton";
-
-          /// Completes [SERVER_PATH_SKELETON] by replacing the handlebars with the
-          /// fields in [json].
-          static String _completeServerPath(String? serverPathSkeleton, Json json) {
-            return (serverPathSkeleton ?? SERVER_PATH_SKELETON).replaceHandlebars(json, "{", "}");
-          }
-
-          /// Returns a reference to this model on the server at [SERVER_PATH_SKELETON] or at
-          /// [serverPathSkeleton] if provided.
-          @override
-          DocumentReference<Json> refServer([String? serverPathSkeleton]) {
-            return G.fbFirestore.documentReference(
-              _completeServerPath(serverPathSkeleton, this.toJson()),
-            );
-          }
-
-        /// Redefine this function to override [toServer].
-        /// Pass arbitrary options via [options].
-        static Future<void> Function(
-            $nameClass model, {
-            bool merge,
-            String? serverPathSkeleton,
-            Map<String, dynamic>? writeAlso,
-            Map<Symbol, dynamic>? options,
-          }) toServerOverride = (
-              final model, {
-              final merge = true,
-              final serverPathSkeleton,
-              final writeAlso,
-              final options,
-            }) async {
-            final json = model.toJson();
-            final serverPath = _completeServerPath(serverPathSkeleton, json);
-            await G.fbFirestore.documentReference(serverPath).setSafe(
-                  {
-                    ...json,
-                    if (writeAlso != null) ...writeAlso,
-                  },
-                  SetOptions(merge: merge),
-                );
-          };
-
-          /// Writes this model and the fields [writeAlso] to the server at
-          /// [SERVER_PATH_SKELETON] or at [serverPathSkeleton] if provided, with the
-          /// given [options].
-          @override
-          Future<void> toServer({
-            bool merge = true,
-            String? serverPathSkeleton,
-            Map<String, dynamic>? writeAlso,
-            Map<Symbol, dynamic>? options,
-          }) async {
-            try {
-              await toServerOverride(
-                this,
-                merge: merge,
-                serverPathSkeleton: serverPathSkeleton,
-                writeAlso: writeAlso,
-                options: options,
-              );
-            } catch (e) {
-              throw Exception(
-                "[$nameClass.toServer] Failed to write model to server: \$e",
-              );
-            }
-          }
-          /// Fetches a model from the server with the given [options].
-          /// 
-          /// Example:
-          /// 
-          /// If [SERVER_PATH_SKELETON] (or `serverPathSkeleton`) = "{collection}/{id}",
-          /// and `pathParameters` = {"collection": "foo", "id": "bar"}, then the model's
-          /// server path is "foo/bar".
-          /// 
-          /// NB: Redefine this function to override its behavior.
-          static Future<$nameClass?> Function(
-            Json pathParameters, {
-            String? serverPathSkeleton,
-          }) fromServer = (
-            Json pathParameters, {
-            String? serverPathSkeleton,
-            Map<Symbol, dynamic>? options,
-          }) async {
-            try {
-              final ref = G.fbFirestore.documentReference(
-                _completeServerPath(serverPathSkeleton, pathParameters),
-              );
-              final json = (await ref.getSafe()).data();
-              return json != null ? $nameClass.fromJson(json) : null;
-            } catch (e) {
-              throw Exception(
-                "[$nameClass.fromServer] Failed to read model from server: \$e",
-              );
-            }
-          };
-
-          /// Redefine this function to override [deleteFromServer].
-          /// Pass arbitrary options via [options].
-          static Future<void> Function(
-            $nameClass model, {
-              String? serverPathSkeleton,
-              Map<Symbol, dynamic>? options,
-            }) deleteFromServerOverride = (
-              final model, {
-              final serverPathSkeleton,
-              final options,
-            }) async {
-            await model.refServer(serverPathSkeleton).deleteSafe();
-          };
-          
-          /// Deletes this model from the server at [SERVER_PATH_SKELETON] or at
-          /// [serverPathSkeleton] if provided, with the given [options].
-          @override
-          Future<void> deleteFromServer({String? serverPathSkeleton}) async {
-            try {
-              await deleteFromServerOverride(
-                this,
-                serverPathSkeleton: serverPathSkeleton,
-              );
-            } catch (e) {
-              throw Exception(
-                "[$nameClass.deleteFromServer] Failed to delete model from server: \$e",
-              );
-            }
-          }
-          """
-        ],
-        "}"
       ],
       "\n",
     );
