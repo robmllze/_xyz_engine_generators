@@ -332,6 +332,15 @@ final defaultToMappers = TMappers.unmodifiable({
     if (e is! MapperSubEvent) throw TypeError();
     return "(){ final a = ${e.p}; return a != null ? Timestamp.fromDate(a): null; }()";
   },
+  //
+  r"^\w+Type$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}.call()";
+  },
+  r"^\w+Type\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "${e.p}?.call()";
+  },
 });
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -521,5 +530,14 @@ final defaultFromMappers = TMappers.unmodifiable({
   r"^DateTime\|let\??$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
     return "letTimestamp(${e.p})?.toDate()";
+  },
+  //
+  r"^\w+Type$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "labelTo${e.keyMatchGroups?.elementAt(0)}(letAs<String>(${e.p}))!";
+  },
+  r"^(\w+Type)\?$": (e) {
+    if (e is! MapperSubEvent) throw TypeError();
+    return "labelTo${e.keyMatchGroups?.elementAt(1)}(letAs<String>(${e.p}))";
   },
 });

@@ -284,14 +284,21 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
 
           /// Creates a new [$nameScreenConfigurationClass] [from] a
           /// [MyRouteConfiguration] object.
-          $nameScreenConfigurationClass.from(MyRouteConfiguration from)
-            : super.fromUri(from.uri, key: from.key, internalParameters: from.internalParameters);
+          $nameScreenConfigurationClass.from(
+              MyRouteConfiguration from,
+            ): super.fromUri(
+              from.uri,
+              key: from.key,
+              internalParameters: from.internalParameters,
+            );
 
           /// Converts this $nameScreenConfigurationClass object [to] a
           /// [MyRouteConfiguration] object.
           @override
           MyRouteConfiguration to() {
-            debugLog("Converting $nameScreenConfigurationClass to MyRouteConfiguration");
+            debugLog(
+              "Converting $nameScreenConfigurationClass to MyRouteConfiguration",
+            );
             return MyRouteConfiguration.fromUri(
               this.uri,
               key: this.key,
