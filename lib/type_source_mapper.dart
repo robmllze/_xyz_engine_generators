@@ -335,11 +335,11 @@ final defaultToMappers = TMappers.unmodifiable({
   //
   r"^\w+Type$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}.call()";
+    return "${e.p}.name.toLowerCase()";
   },
   r"^\w+Type\?$": (e) {
     if (e is! MapperSubEvent) throw TypeError();
-    return "${e.p}?.call()";
+    return "${e.p}?.name.toLowerCase()";
   },
 });
 
