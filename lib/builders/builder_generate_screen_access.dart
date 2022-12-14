@@ -38,8 +38,6 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         = annotation.read("isOnlyAccessibleIfSignedIn").boolValue;
     final isOnlyAccessibleIfSignedOut //
         = annotation.read("isOnlyAccessibleIfSignedOut").boolValue;
-    final isRedirectable //
-        = annotation.read("isRedirectable").boolValue;
     final visitor = ModelVisitor();
     element.visitChildren(visitor);
     final buffer = StringBuffer();
@@ -58,6 +56,10 @@ class GeneratorScreenAccess extends GeneratorForAnnotation<GenerateScreenAccess>
         annotation.read("pathSegments").listValue.map((final v) => v.toStringValue()!);
     final queryParameters =
         annotation.read("queryParameters").setValue.map((final v) => v.toStringValue()!);
+    final isRedirectable = () {
+      final temp = annotation.read("isRedirectable");
+      return temp.isNull ? internalParameters.isEmpty /* true if empty */ : temp.boolValue;
+    }();
 
     // [2] Prepare internal parameters.
 
